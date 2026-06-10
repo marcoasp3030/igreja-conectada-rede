@@ -23,6 +23,7 @@ const items = [
   { title: "EBD", url: "/app/ebd", icon: BookOpen },
   { title: "Departamentos", url: "/app/departamentos", icon: Building2 },
   { title: "Usuários", url: "/app/usuarios", icon: UserCog },
+  { title: "Auditoria", url: "/app/auditoria", icon: ScrollText },
 ];
 
 export function AppSidebar() {
