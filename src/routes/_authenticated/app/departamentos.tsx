@@ -32,11 +32,13 @@ export const Route = createFileRoute("/_authenticated/app/departamentos")({
 
 function Departamentos() {
   const queryClient = useQueryClient();
-  const { profile } = useProfile();
-  const isAdmin = profile?.role === "admin_sede" || profile?.role === "admin_congregacao";
+  const { user } = useAuth();
+  const { data: profileData } = useProfile(user?.id);
+  const isAdmin = profileData?.isSedeAdmin || profileData?.isCongregacaoAdmin;
   
   const [formOpen, setFormOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<Departamento | null>(null);
+
 
   const { data: departments, isLoading } = useQuery({
     queryKey: ["departamentos"],
