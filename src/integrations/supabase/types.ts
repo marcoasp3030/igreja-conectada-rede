@@ -751,6 +751,53 @@ export type Database = {
         }
         Relationships: []
       }
+      user_audit_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          actor_user_name: string | null
+          changes: Json
+          congregation_id: string | null
+          created_at: string
+          id: string
+          target_user_email: string | null
+          target_user_id: string | null
+          target_user_name: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          actor_user_name?: string | null
+          changes?: Json
+          congregation_id?: string | null
+          created_at?: string
+          id?: string
+          target_user_email?: string | null
+          target_user_id?: string | null
+          target_user_name?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          actor_user_name?: string | null
+          changes?: Json
+          congregation_id?: string | null
+          created_at?: string
+          id?: string
+          target_user_email?: string | null
+          target_user_id?: string | null
+          target_user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_audit_logs_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           congregation_id: string | null
