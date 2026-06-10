@@ -99,14 +99,14 @@ function Departamentos() {
       <PageHeader 
         title="Departamentos" 
         description="Ministérios e departamentos do Setor 70."
-      >
-        {isAdmin && (
+        actions={isAdmin ? (
           <Button onClick={handleAdd} className="gap-2">
             <Plus className="h-4 w-4" />
             Novo Departamento
           </Button>
-        )}
-      </PageHeader>
+        ) : undefined}
+      />
+
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {isLoading ? (
