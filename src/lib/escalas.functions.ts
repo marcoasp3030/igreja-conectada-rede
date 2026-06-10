@@ -197,7 +197,8 @@ export const getPendingApprovals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data: profile } = await context.supabase.from("profiles").select("congregation_id").eq("id", context.userId).single();
-    const isSedeAdmin = context.claims.includes("admin_sede");
+    const { data: roleRows } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const isSedeAdmin = (roleRows ?? []).some((r: any) => r.role === "admin_sede");
 
     let query = context.supabase
       .from("schedule_assignments")
