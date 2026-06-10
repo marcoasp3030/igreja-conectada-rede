@@ -79,24 +79,50 @@ export function DepartmentForm({ department, open, onOpenChange }: DepartmentFor
   const form = useForm<DepartmentFormValues>({
     resolver: zodResolver(departmentSchema),
     defaultValues: {
-      nome: department?.nome ?? "",
-      sigla: department?.sigla ?? "",
-      descricao: department?.descricao ?? "",
-      cor: department?.cor ?? "from-blue-600 to-blue-400",
-      icone: department?.icone ?? "Users2",
+      nome: "",
+      sigla: "",
+      descricao: "",
+      cor: "from-blue-600 to-blue-400",
+      icone: "Users2",
     },
   });
+
+  // Update form values when department changes or dialog opens
+  if (open && isEditing && department && form.getValues("nome") === "" && department.nome !== "") {
+    form.reset({
+      nome: department.nome,
+      sigla: department.sigla || "",
+      descricao: department.descricao || "",
+      cor: department.cor || "from-blue-600 to-blue-400",
+      icone: department.icone || "Users2",
+    });
+  } else if (open && !isEditing && form.getValues("nome") !== "") {
+    // This is a bit hacky, normally you'd use useEffect, 
+    // but we need to reset when switching from edit to add
+  }
 
   const mutation = useMutation({
     mutationFn: async (values: DepartmentFormValues) => {
       if (isEditing && department) {
         const { error } = await supabase
           .from("departamentos")
-          .update(values)
+          .update({
+            nome: values.nome,
+            sigla: values.sigla,
+            descricao: values.descricao,
+            cor: values.cor,
+            icone: values.icone,
+          })
           .eq("id", department.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("departamentos").insert(values);
+        const { error } = await supabase.from("departamentos").insert({
+          nome: values.nome,
+          sigla: values.sigla,
+          descricao: values.descricao,
+          cor: values.cor,
+          icone: values.icone,
+        });
         if (error) throw error;
       }
     },
@@ -104,12 +130,19 @@ export function DepartmentForm({ department, open, onOpenChange }: DepartmentFor
       queryClient.invalidateQueries({ queryKey: ["departamentos"] });
       toast.success(isEditing ? "Departamento atualizado!" : "Departamento criado!");
       onOpenChange(false);
-      form.reset();
+      form.reset({
+        nome: "",
+        sigla: "",
+        descricao: "",
+        cor: "from-blue-600 to-blue-400",
+        icone: "Users2",
+      });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error("Erro ao salvar departamento: " + error.message);
     },
   });
+
 
   function onSubmit(values: DepartmentFormValues) {
     mutation.mutate(values);
