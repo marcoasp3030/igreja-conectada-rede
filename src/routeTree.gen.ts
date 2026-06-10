@@ -16,6 +16,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppUsuariosRouteImport } from './routes/_authenticated/app/usuarios'
 import { Route as AuthenticatedAppMembrosRouteImport } from './routes/_authenticated/app/membros'
 import { Route as AuthenticatedAppMapaRouteImport } from './routes/_authenticated/app/mapa'
+import { Route as AuthenticatedAppMaoAmigaRouteImport } from './routes/_authenticated/app/mao-amiga'
 import { Route as AuthenticatedAppEscalasRouteImport } from './routes/_authenticated/app/escalas'
 import { Route as AuthenticatedAppEbdRouteImport } from './routes/_authenticated/app/ebd'
 import { Route as AuthenticatedAppDepartamentosRouteImport } from './routes/_authenticated/app/departamentos'
@@ -60,6 +61,12 @@ const AuthenticatedAppMapaRoute = AuthenticatedAppMapaRouteImport.update({
   path: '/app/mapa',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAppMaoAmigaRoute =
+  AuthenticatedAppMaoAmigaRouteImport.update({
+    id: '/app/mao-amiga',
+    path: '/app/mao-amiga',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppEscalasRoute = AuthenticatedAppEscalasRouteImport.update({
   id: '/app/escalas',
   path: '/app/escalas',
@@ -116,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/app/ebd': typeof AuthenticatedAppEbdRoute
   '/app/escalas': typeof AuthenticatedAppEscalasRoute
+  '/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
   '/app/membros': typeof AuthenticatedAppMembrosRoute
   '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
@@ -132,6 +140,7 @@ export interface FileRoutesByTo {
   '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/app/ebd': typeof AuthenticatedAppEbdRoute
   '/app/escalas': typeof AuthenticatedAppEscalasRoute
+  '/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
   '/app/membros': typeof AuthenticatedAppMembrosRoute
   '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
@@ -150,6 +159,7 @@ export interface FileRoutesById {
   '/_authenticated/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/_authenticated/app/ebd': typeof AuthenticatedAppEbdRoute
   '/_authenticated/app/escalas': typeof AuthenticatedAppEscalasRoute
+  '/_authenticated/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
   '/_authenticated/app/mapa': typeof AuthenticatedAppMapaRoute
   '/_authenticated/app/membros': typeof AuthenticatedAppMembrosRoute
   '/_authenticated/app/usuarios': typeof AuthenticatedAppUsuariosRoute
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/app/departamentos'
     | '/app/ebd'
     | '/app/escalas'
+    | '/app/mao-amiga'
     | '/app/mapa'
     | '/app/membros'
     | '/app/usuarios'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/app/departamentos'
     | '/app/ebd'
     | '/app/escalas'
+    | '/app/mao-amiga'
     | '/app/mapa'
     | '/app/membros'
     | '/app/usuarios'
@@ -201,6 +213,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/departamentos'
     | '/_authenticated/app/ebd'
     | '/_authenticated/app/escalas'
+    | '/_authenticated/app/mao-amiga'
     | '/_authenticated/app/mapa'
     | '/_authenticated/app/membros'
     | '/_authenticated/app/usuarios'
@@ -262,6 +275,13 @@ declare module '@tanstack/react-router' {
       path: '/app/mapa'
       fullPath: '/app/mapa'
       preLoaderRoute: typeof AuthenticatedAppMapaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/mao-amiga': {
+      id: '/_authenticated/app/mao-amiga'
+      path: '/app/mao-amiga'
+      fullPath: '/app/mao-amiga'
+      preLoaderRoute: typeof AuthenticatedAppMaoAmigaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app/escalas': {
@@ -332,6 +352,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppDepartamentosRoute: typeof AuthenticatedAppDepartamentosRoute
   AuthenticatedAppEbdRoute: typeof AuthenticatedAppEbdRoute
   AuthenticatedAppEscalasRoute: typeof AuthenticatedAppEscalasRoute
+  AuthenticatedAppMaoAmigaRoute: typeof AuthenticatedAppMaoAmigaRoute
   AuthenticatedAppMapaRoute: typeof AuthenticatedAppMapaRoute
   AuthenticatedAppMembrosRoute: typeof AuthenticatedAppMembrosRoute
   AuthenticatedAppUsuariosRoute: typeof AuthenticatedAppUsuariosRoute
@@ -347,6 +368,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppDepartamentosRoute: AuthenticatedAppDepartamentosRoute,
   AuthenticatedAppEbdRoute: AuthenticatedAppEbdRoute,
   AuthenticatedAppEscalasRoute: AuthenticatedAppEscalasRoute,
+  AuthenticatedAppMaoAmigaRoute: AuthenticatedAppMaoAmigaRoute,
   AuthenticatedAppMapaRoute: AuthenticatedAppMapaRoute,
   AuthenticatedAppMembrosRoute: AuthenticatedAppMembrosRoute,
   AuthenticatedAppUsuariosRoute: AuthenticatedAppUsuariosRoute,
