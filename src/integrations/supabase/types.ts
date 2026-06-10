@@ -121,6 +121,39 @@ export type Database = {
         }
         Relationships: []
       }
+      departamentos: {
+        Row: {
+          cor: string | null
+          created_at: string | null
+          descricao: string | null
+          icone: string | null
+          id: string
+          nome: string
+          sigla: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          sigla?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          sigla?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ebd_lessons: {
         Row: {
           congregation_id: string | null
