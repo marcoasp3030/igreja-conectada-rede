@@ -18,6 +18,7 @@ const items = [
   { title: "Membros", url: "/app/membros", icon: Users },
   { title: "Mapa", url: "/app/mapa", icon: MapPin },
   { title: "Agenda", url: "/app/agenda", icon: Calendar },
+  { title: "Escalas", url: "/app/escalas", icon: Users2 },
   { title: "Avisos", url: "/app/avisos", icon: Megaphone },
   { title: "EBD", url: "/app/ebd", icon: BookOpen },
   { title: "Departamentos", url: "/app/departamentos", icon: Building2 },
