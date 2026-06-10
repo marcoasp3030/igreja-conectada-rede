@@ -16,6 +16,9 @@ import {
   MapPin,
   Trophy,
   Activity,
+  Cake,
+  CalendarCheck,
+  LineChart as LineChartIcon,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -25,6 +28,9 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  LineChart,
+  Line,
+  Legend,
 } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/app/")({
@@ -32,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/app/")({
 });
 
 const STOCK_THRESHOLD = 5;
+const LOW_EBD_PCT = 50;
 
 function startOfMonth(offset = 0) {
   const d = new Date();
@@ -40,14 +47,25 @@ function startOfMonth(offset = 0) {
   return d;
 }
 
+function monthKey(d: Date | string) {
+  const x = typeof d === "string" ? new Date(d) : d;
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthLabel(key: string) {
+  const [y, m] = key.split("-");
+  const names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  return `${names[Number(m) - 1]}/${y.slice(2)}`;
+}
+
 function Dashboard() {
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-sede-v2"],
+    queryKey: ["dashboard-sede-v3"],
     queryFn: async () => {
       const monthStart = startOfMonth(0).toISOString();
       const prevMonthStart = startOfMonth(-1).toISOString();
-      const threeMonthsAgo = startOfMonth(-3).toISOString().slice(0, 10);
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+      const sixMonthsAgo = startOfMonth(-5).toISOString().slice(0, 10);
+      const threeMonthsAgo = startOfMonth(-2).toISOString().slice(0, 10);
 
       const [
         congs,
@@ -55,24 +73,24 @@ function Dashboard() {
         membersThisMonth,
         membersLastMonth,
         familias,
-        entregasMonth,
-        doacoes,
+        entregas6m,
+        doacoes6m,
         estoque,
-        attendanceSessions,
-        attendanceRecords,
+        sessions6m,
+        records,
         assignments,
       ] = await Promise.all([
         supabase.from("congregations").select("id, name, is_headquarters, city, latitude, longitude, lead_pastor"),
-        supabase.from("members").select("id, congregation_id, active, created_at"),
+        supabase.from("members").select("id, congregation_id, active, created_at, full_name, birth_date, phone"),
         supabase.from("members").select("id", { count: "exact", head: true }).gte("created_at", monthStart),
         supabase.from("members").select("id", { count: "exact", head: true }).gte("created_at", prevMonthStart).lt("created_at", monthStart),
-        supabase.from("mao_amiga_familias").select("id, congregation_id, ativo"),
-        supabase.from("mao_amiga_entregas").select("id, congregation_id, data_entrega").gte("data_entrega", monthStart.slice(0, 10)),
-        supabase.from("mao_amiga_doacoes").select("congregation_id, valor_dinheiro, quantidade, data_doacao").gte("data_doacao", monthStart.slice(0, 10)),
+        supabase.from("mao_amiga_familias").select("id, congregation_id, ativo, created_at"),
+        supabase.from("mao_amiga_entregas").select("id, congregation_id, data_entrega").gte("data_entrega", sixMonthsAgo),
+        supabase.from("mao_amiga_doacoes").select("congregation_id, valor_dinheiro, quantidade, data_doacao").gte("data_doacao", sixMonthsAgo),
         supabase.from("mao_amiga_estoque").select("id, congregation_id, descricao, unidade, quantidade, categoria_id, mao_amiga_categorias(nome)"),
-        supabase.from("ebd_attendance_sessions").select("id, class_id, lesson_date, ebd_classes(congregation_id)").gte("lesson_date", threeMonthsAgo),
+        supabase.from("ebd_attendance_sessions").select("id, class_id, lesson_date, ebd_classes(congregation_id)").gte("lesson_date", sixMonthsAgo),
         supabase.from("ebd_attendance_records").select("session_id, present"),
-        supabase.from("schedule_assignments").select("status, volunteer_id, created_at").gte("created_at", thirtyDaysAgo),
+        supabase.from("schedule_assignments").select("status, volunteer_id, created_at"),
       ]);
 
       return {
@@ -81,12 +99,13 @@ function Dashboard() {
         newThisMonth: membersThisMonth.count ?? 0,
         newLastMonth: membersLastMonth.count ?? 0,
         familias: familias.data ?? [],
-        entregasMonth: entregasMonth.data ?? [],
-        doacoes: doacoes.data ?? [],
+        entregas6m: entregas6m.data ?? [],
+        doacoes6m: doacoes6m.data ?? [],
         estoque: (estoque.data ?? []) as Array<{ id: string; congregation_id: string; descricao: string; unidade: string; quantidade: number; mao_amiga_categorias: { nome: string } | null }>,
-        sessions: (attendanceSessions.data ?? []) as Array<{ id: string; ebd_classes: { congregation_id: string } | null }>,
-        records: attendanceRecords.data ?? [],
+        sessions6m: (sessions6m.data ?? []) as Array<{ id: string; lesson_date: string; ebd_classes: { congregation_id: string } | null }>,
+        records: records.data ?? [],
         assignments: assignments.data ?? [],
+        threeMonthsAgo,
       };
     },
   });
@@ -108,8 +127,8 @@ function Dashboard() {
   const totalMembers = data.members.filter((m) => m.active).length;
   const totalCongs = data.congs.length;
   const familiasAtivas = data.familias.filter((f) => f.ativo).length;
-  const totalArrecadadoMes = data.doacoes.reduce((acc, d) => acc + Number(d.valor_dinheiro ?? 0), 0);
-  const entregasMes = data.entregasMonth.length;
+  const totalArrecadado6m = data.doacoes6m.reduce((acc, d) => acc + Number(d.valor_dinheiro ?? 0), 0);
+  const entregasMes = data.entregas6m.filter((e) => e.data_entrega >= startOfMonth(0).toISOString().slice(0, 10)).length;
   const growthDelta = data.newThisMonth - data.newLastMonth;
   const growthPct =
     data.newLastMonth > 0
@@ -123,26 +142,28 @@ function Dashboard() {
   for (const m of data.members) if (m.active) membersByCong.set(m.congregation_id, (membersByCong.get(m.congregation_id) ?? 0) + 1);
   const maxMembers = Math.max(1, ...Array.from(membersByCong.values()));
 
+  const sessionMeta = new Map<string, { cong: string; date: string }>();
+  for (const s of data.sessions6m) if (s.ebd_classes) sessionMeta.set(s.id, { cong: s.ebd_classes.congregation_id, date: s.lesson_date });
+
   // EBD attendance % per congregation (last 3 months)
-  const sessionToCong = new Map<string, string>();
-  for (const s of data.sessions) if (s.ebd_classes) sessionToCong.set(s.id, s.ebd_classes.congregation_id);
   const ebdByCong = new Map<string, { present: number; total: number }>();
   for (const r of data.records) {
-    const cong = sessionToCong.get(r.session_id);
-    if (!cong) continue;
-    const cur = ebdByCong.get(cong) ?? { present: 0, total: 0 };
+    const meta = sessionMeta.get(r.session_id);
+    if (!meta) continue;
+    if (meta.date < data.threeMonthsAgo) continue;
+    const cur = ebdByCong.get(meta.cong) ?? { present: 0, total: 0 };
     cur.total += 1;
     if (r.present) cur.present += 1;
-    ebdByCong.set(cong, cur);
+    ebdByCong.set(meta.cong, cur);
   }
 
-  // Mão Amiga activity per congregation (last 30 days)
+  // Mão Amiga monthly activity per congregation
   const maoAmigaActivity = new Map<string, number>();
-  for (const e of data.entregasMonth) maoAmigaActivity.set(e.congregation_id, (maoAmigaActivity.get(e.congregation_id) ?? 0) + 1);
-  for (const d of data.doacoes) maoAmigaActivity.set(d.congregation_id, (maoAmigaActivity.get(d.congregation_id) ?? 0) + 1);
+  const currentMonth = startOfMonth(0).toISOString().slice(0, 10);
+  for (const e of data.entregas6m) if (e.data_entrega >= currentMonth) maoAmigaActivity.set(e.congregation_id, (maoAmigaActivity.get(e.congregation_id) ?? 0) + 1);
+  for (const d of data.doacoes6m) if (d.data_doacao >= currentMonth) maoAmigaActivity.set(d.congregation_id, (maoAmigaActivity.get(d.congregation_id) ?? 0) + 1);
 
-  // Schedule fill % per congregation (proxy: % approved out of total)
-  // Health Score per congregation
+  // Health Score
   const ranking = data.congs
     .map((c) => {
       const m = membersByCong.get(c.id) ?? 0;
@@ -160,20 +181,86 @@ function Dashboard() {
     })
     .sort((a, b) => b.health - a.health);
 
-  // Critical stock (per congregation x item, quantity below threshold)
+  // Critical stock
   const stockCritical = data.estoque
     .filter((e) => Number(e.quantidade) <= STOCK_THRESHOLD)
     .sort((a, b) => Number(a.quantidade) - Number(b.quantidade));
   const congsWithCriticalStock = new Set(stockCritical.map((s) => s.congregation_id)).size;
 
   const congNameById = new Map(data.congs.map((c) => [c.id, c.name]));
-
   const chartData = ranking.slice(0, 8).map((c) => ({ name: c.name.length > 14 ? c.name.slice(0, 12) + "…" : c.name, membros: c.members }));
 
   const healthBadgeVariant = (h: number) => (h >= 75 ? "default" : h >= 50 ? "secondary" : "destructive");
   const healthLabel = (h: number) => (h >= 75 ? "Saudável" : h >= 50 ? "Atenção" : "Crítico");
-
   const congsWithGeo = data.congs.filter((c) => c.latitude && c.longitude);
+
+  // === FASE 2 ===
+  // 6-month month keys (oldest -> newest)
+  const monthKeys: string[] = [];
+  for (let i = 5; i >= 0; i--) monthKeys.push(monthKey(startOfMonth(-i)));
+
+  // Growth: cumulative active members per month (total Setor 70)
+  const growthSeries = monthKeys.map((mk) => {
+    const endOfMonth = new Date(Number(mk.split("-")[0]), Number(mk.split("-")[1]), 1);
+    const count = data.members.filter((m) => m.active && new Date(m.created_at) < endOfMonth).length;
+    return { month: monthLabel(mk), membros: count };
+  });
+
+  // EBD trend (6 months) — overall % per month
+  const ebdMonth = new Map<string, { present: number; total: number }>();
+  for (const r of data.records) {
+    const meta = sessionMeta.get(r.session_id);
+    if (!meta) continue;
+    const mk = monthKey(meta.date);
+    if (!monthKeys.includes(mk)) continue;
+    const cur = ebdMonth.get(mk) ?? { present: 0, total: 0 };
+    cur.total += 1;
+    if (r.present) cur.present += 1;
+    ebdMonth.set(mk, cur);
+  }
+  const ebdTrend = monthKeys.map((mk) => {
+    const v = ebdMonth.get(mk);
+    return { month: monthLabel(mk), frequencia: v && v.total > 0 ? Math.round((v.present / v.total) * 100) : 0 };
+  });
+
+  // Mão Amiga trend (6 months): entregas + famílias atendidas únicas / mês
+  const maTrend = monthKeys.map((mk) => {
+    const entregas = data.entregas6m.filter((e) => monthKey(e.data_entrega) === mk).length;
+    const valor = data.doacoes6m
+      .filter((d) => monthKey(d.data_doacao) === mk)
+      .reduce((acc, d) => acc + Number(d.valor_dinheiro ?? 0), 0);
+    return { month: monthLabel(mk), entregas, valor: Math.round(valor) };
+  });
+
+  // Schedule coverage by congregation (proxy: % approved/total assignments + unique volunteers)
+  // assignments table has no congregation_id → aggregate global
+  const totalAssign = data.assignments.length;
+  const aprovados = data.assignments.filter((a) => a.status === "aprovado").length;
+  const pendentes = data.assignments.filter((a) => a.status === "pendente").length;
+  const recusados = data.assignments.filter((a) => a.status === "recusado").length;
+  const voluntariosUnicos = new Set(data.assignments.map((a) => a.volunteer_id)).size;
+  const coberturaPct = totalAssign > 0 ? Math.round((aprovados / totalAssign) * 100) : 0;
+
+  // Aniversariantes do mês (todas as congregações)
+  const currentMonthNum = new Date().getMonth() + 1;
+  const aniversariantes = data.members
+    .filter((m) => m.active && m.birth_date && new Date(m.birth_date + "T00:00:00").getMonth() + 1 === currentMonthNum)
+    .map((m) => ({
+      id: m.id,
+      name: m.full_name,
+      phone: m.phone,
+      cong: congNameById.get(m.congregation_id) ?? "—",
+      day: new Date(m.birth_date! + "T00:00:00").getDate(),
+    }))
+    .sort((a, b) => a.day - b.day);
+
+  // Alertas EBD baixa frequência (últimos 3 meses < LOW_EBD_PCT)
+  const alertasEBD = ranking
+    .filter((c) => {
+      const v = ebdByCong.get(c.id);
+      return v && v.total >= 4 && (v.present / v.total) * 100 < LOW_EBD_PCT;
+    })
+    .map((c) => ({ id: c.id, name: c.name, pct: c.ebdPct }));
 
   const kpis = [
     { label: "Congregações", value: totalCongs, icon: Church, hint: `${congsWithGeo.length} com localização` },
@@ -189,7 +276,7 @@ function Dashboard() {
       label: "Mão Amiga (mês)",
       value: entregasMes,
       icon: HeartHandshake,
-      hint: `${familiasAtivas} famílias · R$ ${totalArrecadadoMes.toLocaleString("pt-BR")}`,
+      hint: `${familiasAtivas} famílias · R$ ${totalArrecadado6m.toLocaleString("pt-BR")} (6m)`,
     },
   ];
 
@@ -214,21 +301,40 @@ function Dashboard() {
       </div>
 
       {/* Alertas */}
-      {(congsWithCriticalStock > 0 || stockCritical.length > 0) && (
-        <Card className="border-destructive/40 bg-destructive/5 shadow-card">
-          <CardContent className="flex items-center gap-3 p-4">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold">
-                {stockCritical.length} item(ns) em estoque crítico em {congsWithCriticalStock} congregação(ões)
-              </p>
-              <p className="text-xs text-muted-foreground">Itens com saldo ≤ {STOCK_THRESHOLD} no projeto Mão Amiga.</p>
-            </div>
-            <Link to="/app/mao-amiga" className="text-xs font-semibold text-destructive hover:underline">
-              Ver detalhes →
-            </Link>
-          </CardContent>
-        </Card>
+      {(stockCritical.length > 0 || alertasEBD.length > 0) && (
+        <div className="grid gap-3 md:grid-cols-2">
+          {stockCritical.length > 0 && (
+            <Card className="border-destructive/40 bg-destructive/5 shadow-card">
+              <CardContent className="flex items-center gap-3 p-4">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">
+                    {stockCritical.length} item(ns) em estoque crítico em {congsWithCriticalStock} congregação(ões)
+                  </p>
+                  <p className="text-xs text-muted-foreground">Saldo ≤ {STOCK_THRESHOLD} no Mão Amiga.</p>
+                </div>
+                <Link to="/app/mao-amiga" className="text-xs font-semibold text-destructive hover:underline">
+                  Ver →
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+          {alertasEBD.length > 0 && (
+            <Card className="border-amber-500/40 bg-amber-500/5 shadow-card">
+              <CardContent className="flex items-center gap-3 p-4">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">
+                    {alertasEBD.length} congregação(ões) com frequência EBD &lt; {LOW_EBD_PCT}% (3m)
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {alertasEBD.slice(0, 3).map((a) => `${a.name} (${a.pct}%)`).join(" · ")}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -278,7 +384,7 @@ function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Top membros chart */}
+        {/* Top membros */}
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -302,11 +408,138 @@ function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Estoque Crítico */}
+        {/* FASE 2 — Crescimento 6m */}
         <Card className="lg:col-span-2 shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive" /> Estoque Crítico — Mão Amiga
+              <LineChartIcon className="h-4 w-4 text-primary" /> Crescimento de membros (6 meses)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={growthSeries} margin={{ left: 0, right: 12, top: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="month" fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                <Line type="monotone" dataKey="membros" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* FASE 2 — EBD trend */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" /> Frequência EBD (6m)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={ebdTrend} margin={{ left: 0, right: 12, top: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="month" fontSize={11} />
+                <YAxis fontSize={11} domain={[0, 100]} unit="%" />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                <Line type="monotone" dataKey="frequencia" stroke="hsl(var(--gold, var(--primary)))" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* FASE 2 — Mão Amiga trend */}
+        <Card className="lg:col-span-2 shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <HeartHandshake className="h-4 w-4 text-primary" /> Mão Amiga · Tendência (6m)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={maTrend} margin={{ left: 0, right: 12, top: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="month" fontSize={11} />
+                <YAxis yAxisId="l" fontSize={11} />
+                <YAxis yAxisId="r" orientation="right" fontSize={11} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line yAxisId="l" type="monotone" dataKey="entregas" name="Entregas" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                <Line yAxisId="r" type="monotone" dataKey="valor" name="R$ arrecadado" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* FASE 2 — Escalas */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarCheck className="h-4 w-4 text-primary" /> Escalas · Cobertura
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium">Aprovação geral</span>
+                <span className="text-muted-foreground">{coberturaPct}%</span>
+              </div>
+              <Progress value={coberturaPct} className="mt-1 h-1.5" />
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-md border bg-card/40 p-2">
+                <p className="text-lg font-bold text-emerald-500">{aprovados}</p>
+                <p className="text-[10px] uppercase text-muted-foreground">Aprov.</p>
+              </div>
+              <div className="rounded-md border bg-card/40 p-2">
+                <p className="text-lg font-bold text-amber-500">{pendentes}</p>
+                <p className="text-[10px] uppercase text-muted-foreground">Pend.</p>
+              </div>
+              <div className="rounded-md border bg-card/40 p-2">
+                <p className="text-lg font-bold text-destructive">{recusados}</p>
+                <p className="text-[10px] uppercase text-muted-foreground">Recus.</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{voluntariosUnicos}</span> voluntários únicos escalados
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* FASE 2 — Aniversariantes */}
+        <Card className="lg:col-span-2 shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Cake className="h-4 w-4 text-pink-500" /> Aniversariantes do mês
+              <Badge variant="secondary" className="ml-2">{aniversariantes.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {aniversariantes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum aniversariante este mês.</p>
+            ) : (
+              <div className="max-h-72 overflow-y-auto">
+                <ul className="divide-y">
+                  {aniversariantes.map((a) => (
+                    <li key={a.id} className="flex items-center justify-between py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{a.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{a.cong}{a.phone ? ` · ${a.phone}` : ""}</p>
+                      </div>
+                      <Badge variant="outline" className="border-pink-500/40 text-pink-500">Dia {a.day}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Estoque crítico */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive" /> Estoque Crítico
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -314,12 +547,12 @@ function Dashboard() {
               <p className="text-sm text-muted-foreground">Nenhum item em estado crítico. ✅</p>
             ) : (
               <ul className="divide-y">
-                {stockCritical.slice(0, 8).map((s) => (
+                {stockCritical.slice(0, 6).map((s) => (
                   <li key={s.id} className="flex items-center justify-between py-2">
-                    <div>
-                      <p className="text-sm font-medium">{s.descricao}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {s.mao_amiga_categorias?.nome ?? "—"} · {congNameById.get(s.congregation_id) ?? "—"}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{s.descricao}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {congNameById.get(s.congregation_id) ?? "—"}
                       </p>
                     </div>
                     <Badge variant="destructive">
@@ -327,40 +560,6 @@ function Dashboard() {
                     </Badge>
                   </li>
                 ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* EBD consolidado */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-primary" /> EBD · Frequência (3m)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {ebdByCong.size === 0 ? (
-              <p className="text-sm text-muted-foreground">Sem registros de chamada.</p>
-            ) : (
-              <ul className="space-y-3">
-                {Array.from(ebdByCong.entries())
-                  .map(([cong, v]) => ({
-                    cong,
-                    pct: v.total > 0 ? Math.round((v.present / v.total) * 100) : 0,
-                    total: v.total,
-                  }))
-                  .sort((a, b) => b.pct - a.pct)
-                  .slice(0, 6)
-                  .map((row) => (
-                    <li key={row.cong}>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="truncate font-medium">{congNameById.get(row.cong) ?? "—"}</span>
-                        <span className="text-muted-foreground">{row.pct}%</span>
-                      </div>
-                      <Progress value={row.pct} className="mt-1 h-1.5" />
-                    </li>
-                  ))}
               </ul>
             )}
           </CardContent>
