@@ -68,7 +68,7 @@ function Dashboard() {
         supabase.from("members").select("id", { count: "exact", head: true }).gte("created_at", prevMonthStart).lt("created_at", monthStart),
         supabase.from("mao_amiga_familias").select("id, congregation_id, ativo"),
         supabase.from("mao_amiga_entregas").select("id, congregation_id, data_entrega").gte("data_entrega", monthStart.slice(0, 10)),
-        supabase.from("mao_amiga_doacoes").select("congregation_id, valor_dinheiro, quantidade, data").gte("data", monthStart.slice(0, 10)),
+        supabase.from("mao_amiga_doacoes").select("congregation_id, valor_dinheiro, quantidade, data_doacao").gte("data_doacao", monthStart.slice(0, 10)),
         supabase.from("mao_amiga_estoque").select("id, congregation_id, descricao, unidade, quantidade, categoria_id, mao_amiga_categorias(nome)"),
         supabase.from("ebd_attendance_sessions").select("id, class_id, lesson_date, ebd_classes(congregation_id)").gte("lesson_date", threeMonthsAgo),
         supabase.from("ebd_attendance_records").select("session_id, present"),
