@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppEbdRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAppDepartamentosRouteImport } from './routes/_authenticated/app/departamentos'
 import { Route as AuthenticatedAppCongregacoesRouteImport } from './routes/_authenticated/app/congregacoes'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated/app/configuracoes'
+import { Route as AuthenticatedAppCalendarioRouteImport } from './routes/_authenticated/app/calendario'
 import { Route as AuthenticatedAppAvisosRouteImport } from './routes/_authenticated/app/avisos'
 import { Route as AuthenticatedAppAuditoriaRouteImport } from './routes/_authenticated/app/auditoria'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
@@ -95,6 +96,12 @@ const AuthenticatedAppConfiguracoesRoute =
     path: '/app/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAppCalendarioRoute =
+  AuthenticatedAppCalendarioRouteImport.update({
+    id: '/app/calendario',
+    path: '/app/calendario',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppAvisosRoute = AuthenticatedAppAvisosRouteImport.update({
   id: '/app/avisos',
   path: '/app/avisos',
@@ -118,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/auditoria': typeof AuthenticatedAppAuditoriaRoute
   '/app/avisos': typeof AuthenticatedAppAvisosRoute
+  '/app/calendario': typeof AuthenticatedAppCalendarioRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
   '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
@@ -135,6 +143,7 @@ export interface FileRoutesByTo {
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/auditoria': typeof AuthenticatedAppAuditoriaRoute
   '/app/avisos': typeof AuthenticatedAppAvisosRoute
+  '/app/calendario': typeof AuthenticatedAppCalendarioRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
   '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
@@ -154,6 +163,7 @@ export interface FileRoutesById {
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/_authenticated/app/auditoria': typeof AuthenticatedAppAuditoriaRoute
   '/_authenticated/app/avisos': typeof AuthenticatedAppAvisosRoute
+  '/_authenticated/app/calendario': typeof AuthenticatedAppCalendarioRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/_authenticated/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
   '/_authenticated/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/app/agenda'
     | '/app/auditoria'
     | '/app/avisos'
+    | '/app/calendario'
     | '/app/configuracoes'
     | '/app/congregacoes'
     | '/app/departamentos'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/app/agenda'
     | '/app/auditoria'
     | '/app/avisos'
+    | '/app/calendario'
     | '/app/configuracoes'
     | '/app/congregacoes'
     | '/app/departamentos'
@@ -208,6 +220,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/agenda'
     | '/_authenticated/app/auditoria'
     | '/_authenticated/app/avisos'
+    | '/_authenticated/app/calendario'
     | '/_authenticated/app/configuracoes'
     | '/_authenticated/app/congregacoes'
     | '/_authenticated/app/departamentos'
@@ -319,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/calendario': {
+      id: '/_authenticated/app/calendario'
+      path: '/app/calendario'
+      fullPath: '/app/calendario'
+      preLoaderRoute: typeof AuthenticatedAppCalendarioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app/avisos': {
       id: '/_authenticated/app/avisos'
       path: '/app/avisos'
@@ -347,6 +367,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
   AuthenticatedAppAuditoriaRoute: typeof AuthenticatedAppAuditoriaRoute
   AuthenticatedAppAvisosRoute: typeof AuthenticatedAppAvisosRoute
+  AuthenticatedAppCalendarioRoute: typeof AuthenticatedAppCalendarioRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
   AuthenticatedAppCongregacoesRoute: typeof AuthenticatedAppCongregacoesRoute
   AuthenticatedAppDepartamentosRoute: typeof AuthenticatedAppDepartamentosRoute
@@ -363,6 +384,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
   AuthenticatedAppAuditoriaRoute: AuthenticatedAppAuditoriaRoute,
   AuthenticatedAppAvisosRoute: AuthenticatedAppAvisosRoute,
+  AuthenticatedAppCalendarioRoute: AuthenticatedAppCalendarioRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
   AuthenticatedAppCongregacoesRoute: AuthenticatedAppCongregacoesRoute,
   AuthenticatedAppDepartamentosRoute: AuthenticatedAppDepartamentosRoute,

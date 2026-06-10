@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Users, Church, Calendar, Megaphone, BookOpen,
+  LayoutDashboard, Users, Church, Calendar, CalendarDays, Megaphone, BookOpen,
   MapPin, Building2, Settings, LogOut, Users2, UserCog, ScrollText, HeartHandshake
 } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ const items = [
   { title: "Congregações", url: "/app/congregacoes", icon: Church },
   { title: "Membros", url: "/app/membros", icon: Users },
   { title: "Mapa", url: "/app/mapa", icon: MapPin },
+  { title: "Calendário", url: "/app/calendario", icon: CalendarDays },
   { title: "Agenda", url: "/app/agenda", icon: Calendar },
   { title: "Escalas", url: "/app/escalas", icon: Users2 },
   { title: "Avisos", url: "/app/avisos", icon: Megaphone },
