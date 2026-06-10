@@ -154,6 +154,215 @@ export type Database = {
         }
         Relationships: []
       }
+      ebd_attendance_records: {
+        Row: {
+          created_at: string
+          enrollment_id: string
+          id: string
+          justification: string | null
+          present: boolean
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          justification?: string | null
+          present?: boolean
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          justification?: string | null
+          present?: boolean
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ebd_attendance_records_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "ebd_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ebd_attendance_records_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ebd_attendance_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ebd_attendance_sessions: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          lesson_date: string
+          lesson_title: string | null
+          teacher_id: string | null
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          lesson_date?: string
+          lesson_title?: string | null
+          teacher_id?: string | null
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          lesson_date?: string
+          lesson_title?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ebd_attendance_sessions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "ebd_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ebd_attendance_sessions_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ebd_classes: {
+        Row: {
+          active: boolean
+          assistant_id: string | null
+          category: Database["public"]["Enums"]["ebd_category"]
+          congregation_id: string
+          created_at: string
+          id: string
+          name: string
+          teacher_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          assistant_id?: string | null
+          category: Database["public"]["Enums"]["ebd_category"]
+          congregation_id: string
+          created_at?: string
+          id?: string
+          name: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          assistant_id?: string | null
+          category?: Database["public"]["Enums"]["ebd_category"]
+          congregation_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ebd_classes_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ebd_classes_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ebd_classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ebd_enrollments: {
+        Row: {
+          address: string | null
+          birth_date: string | null
+          class_id: string
+          congregation_id: string
+          created_at: string
+          full_name: string
+          guardian_name: string | null
+          id: string
+          member_id: string | null
+          phone: string | null
+          status: Database["public"]["Enums"]["ebd_student_status"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          birth_date?: string | null
+          class_id: string
+          congregation_id: string
+          created_at?: string
+          full_name: string
+          guardian_name?: string | null
+          id?: string
+          member_id?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["ebd_student_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string | null
+          class_id?: string
+          congregation_id?: string
+          created_at?: string
+          full_name?: string
+          guardian_name?: string | null
+          id?: string
+          member_id?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["ebd_student_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ebd_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "ebd_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ebd_enrollments_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ebd_enrollments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ebd_lessons: {
         Row: {
           congregation_id: string | null
@@ -450,6 +659,8 @@ export type Database = {
         | "Assistencia Social"
         | "EBD"
         | "Teologia FAESP"
+      ebd_category: "Adultos" | "Crianças" | "Jovens" | "Homens" | "Mulheres"
+      ebd_student_status: "ativo" | "visitante" | "transferido" | "inativo"
       event_type:
         | "culto"
         | "evento"
@@ -600,6 +811,8 @@ export const Constants = {
         "EBD",
         "Teologia FAESP",
       ],
+      ebd_category: ["Adultos", "Crianças", "Jovens", "Homens", "Mulheres"],
+      ebd_student_status: ["ativo", "visitante", "transferido", "inativo"],
       event_type: [
         "culto",
         "evento",
