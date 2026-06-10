@@ -192,10 +192,14 @@ function EBD() {
   const createStudent = useMutation({
     mutationFn: async () => {
       const selectedClass = classes?.find(c => c.id === newStudent.class_id);
+      const congId = selectedClass?.congregation_id || congregations?.[0]?.id;
+      if (!congId) throw new Error("Congregação não encontrada");
+      
       const { error } = await supabase.from("ebd_enrollments").insert({
         ...newStudent,
-        congregation_id: selectedClass?.congregation_id || congregations?.[0]?.id,
+        congregation_id: congId,
       });
+
       if (error) throw error;
     },
     onSuccess: () => {
