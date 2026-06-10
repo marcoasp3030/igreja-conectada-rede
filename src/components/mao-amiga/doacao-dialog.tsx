@@ -33,7 +33,7 @@ const doacaoSchema = z.object({
   categoria_id: z.string().min(1, "Categoria é obrigatória"),
   descricao: z.string().min(1, "Descrição é obrigatória"),
   quantidade: z.coerce.number().min(0.01, "Quantidade inválida"),
-  unidade: z.string().default("un"),
+  unidade: z.string().min(1, "Unidade é obrigatória"),
   data_doacao: z.string().min(1, "Data é obrigatória"),
   valor_dinheiro: z.coerce.number().optional().nullable(),
   observacoes: z.string().optional(),
@@ -91,7 +91,7 @@ export function DoacaoDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Doador</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o doador" />
@@ -114,7 +114,7 @@ export function DoacaoDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Categoria" />
