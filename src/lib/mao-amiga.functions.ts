@@ -12,7 +12,6 @@ async function getUserCongregation(supabase: any, userId: string) {
   return data?.congregation_id as string | null;
 }
 
-
 // Schemas
 const doadorSchema = z.object({
   id: z.string().optional(),
@@ -95,10 +94,19 @@ export const listCategorias = createServerFn({ method: "GET" })
 export const listDoadores = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const isSede = await isSedeAdmin(context.supabase, context.userId);
+    const congregation_id = await getUserCongregation(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("mao_amiga_doadores")
       .select("*")
       .order("nome");
+
+    if (!isSede && congregation_id) {
+      query = query.eq("congregation_id", congregation_id);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   });
@@ -119,10 +127,19 @@ export const createDoador = createServerFn({ method: "POST" })
 export const listDoacoes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const isSede = await isSedeAdmin(context.supabase, context.userId);
+    const congregation_id = await getUserCongregation(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("mao_amiga_doacoes")
       .select("*, mao_amiga_doadores(nome), mao_amiga_categorias(nome)")
       .order("data_doacao", { ascending: false });
+
+    if (!isSede && congregation_id) {
+      query = query.eq("congregation_id", congregation_id);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   });
@@ -143,10 +160,19 @@ export const createDoacao = createServerFn({ method: "POST" })
 export const listEstoque = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const isSede = await isSedeAdmin(context.supabase, context.userId);
+    const congregation_id = await getUserCongregation(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("mao_amiga_estoque")
       .select("*, mao_amiga_categorias(nome)")
       .order("descricao");
+
+    if (!isSede && congregation_id) {
+      query = query.eq("congregation_id", congregation_id);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   });
@@ -154,10 +180,19 @@ export const listEstoque = createServerFn({ method: "GET" })
 export const listFamilias = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const isSede = await isSedeAdmin(context.supabase, context.userId);
+    const congregation_id = await getUserCongregation(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("mao_amiga_familias")
       .select("*")
       .order("nome_responsavel");
+
+    if (!isSede && congregation_id) {
+      query = query.eq("congregation_id", congregation_id);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   });
@@ -178,10 +213,19 @@ export const createFamilia = createServerFn({ method: "POST" })
 export const listEntregas = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const isSede = await isSedeAdmin(context.supabase, context.userId);
+    const congregation_id = await getUserCongregation(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("mao_amiga_entregas")
       .select("*, mao_amiga_familias(nome_responsavel), mao_amiga_categorias(nome)")
       .order("data_entrega", { ascending: false });
+
+    if (!isSede && congregation_id) {
+      query = query.eq("congregation_id", congregation_id);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   });
@@ -202,10 +246,19 @@ export const createEntrega = createServerFn({ method: "POST" })
 export const listCampanhas = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const isSede = await isSedeAdmin(context.supabase, context.userId);
+    const congregation_id = await getUserCongregation(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("mao_amiga_campanhas")
       .select("*")
       .order("created_at", { ascending: false });
+
+    if (!isSede && congregation_id) {
+      query = query.eq("congregation_id", congregation_id);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   });
@@ -226,10 +279,19 @@ export const createCampanha = createServerFn({ method: "POST" })
 export const listAvisos = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const isSede = await isSedeAdmin(context.supabase, context.userId);
+    const congregation_id = await getUserCongregation(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("mao_amiga_avisos")
       .select("*")
       .order("created_at", { ascending: false });
+
+    if (!isSede && congregation_id) {
+      query = query.eq("congregation_id", congregation_id);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   });
@@ -251,22 +313,28 @@ export const getMaoAmigaStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId, supabase } = context;
+    const isSede = await isSedeAdmin(supabase, userId);
+    const congregation_id = await getUserCongregation(supabase, userId);
     
-    // Get user congregation
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("congregation_id")
-      .eq("id", userId)
-      .single();
-    
-    const congregation_id = profile?.congregation_id;
-    if (!congregation_id) return null;
+    if (!congregation_id && !isSede) return null;
+
+    let queryDoacoes = supabase.from("mao_amiga_doacoes").select("id", { count: "exact" });
+    let queryFamilias = supabase.from("mao_amiga_familias").select("id", { count: "exact" }).eq("ativo", true);
+    let queryEntregas = supabase.from("mao_amiga_entregas").select("id", { count: "exact" });
+    let queryEstoque = supabase.from("mao_amiga_estoque").select("quantidade");
+
+    if (!isSede && congregation_id) {
+      queryDoacoes = queryDoacoes.eq("congregation_id", congregation_id);
+      queryFamilias = queryFamilias.eq("congregation_id", congregation_id);
+      queryEntregas = queryEntregas.eq("congregation_id", congregation_id);
+      queryEstoque = queryEstoque.eq("congregation_id", congregation_id);
+    }
 
     const [doacoes, familias, entregas, estoque] = await Promise.all([
-      supabase.from("mao_amiga_doacoes").select("id", { count: "exact" }).eq("congregation_id", congregation_id),
-      supabase.from("mao_amiga_familias").select("id", { count: "exact" }).eq("congregation_id", congregation_id).eq("ativo", true),
-      supabase.from("mao_amiga_entregas").select("id", { count: "exact" }).eq("congregation_id", congregation_id),
-      supabase.from("mao_amiga_estoque").select("quantidade").eq("congregation_id", congregation_id),
+      queryDoacoes,
+      queryFamilias,
+      queryEntregas,
+      queryEstoque,
     ]);
 
     return {
