@@ -36,8 +36,8 @@ const departmentSchema = z.object({
   nome: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
   sigla: z.string().min(2, "A sigla deve ter pelo menos 2 caracteres"),
   descricao: z.string().optional(),
-  cor: z.string().default("from-blue-600 to-blue-400"),
-  icone: z.string().default("Users2"),
+  cor: z.string().min(1, "Selecione uma cor"),
+  icone: z.string().min(1, "Selecione um ícone"),
 });
 
 type DepartmentFormValues = z.infer<typeof departmentSchema>;
