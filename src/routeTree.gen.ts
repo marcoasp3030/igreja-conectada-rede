@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
+import { Route as AuthenticatedAppUsuariosRouteImport } from './routes/_authenticated/app/usuarios'
 import { Route as AuthenticatedAppMembrosRouteImport } from './routes/_authenticated/app/membros'
 import { Route as AuthenticatedAppMapaRouteImport } from './routes/_authenticated/app/mapa'
 import { Route as AuthenticatedAppEscalasRouteImport } from './routes/_authenticated/app/escalas'
@@ -42,6 +43,12 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/app/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAppUsuariosRoute =
+  AuthenticatedAppUsuariosRouteImport.update({
+    id: '/app/usuarios',
+    path: '/app/usuarios',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppMembrosRoute = AuthenticatedAppMembrosRouteImport.update({
   id: '/app/membros',
   path: '/app/membros',
@@ -103,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/app/escalas': typeof AuthenticatedAppEscalasRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
   '/app/membros': typeof AuthenticatedAppMembrosRoute
+  '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -117,6 +125,7 @@ export interface FileRoutesByTo {
   '/app/escalas': typeof AuthenticatedAppEscalasRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
   '/app/membros': typeof AuthenticatedAppMembrosRoute
+  '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/app': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesById {
@@ -133,6 +142,7 @@ export interface FileRoutesById {
   '/_authenticated/app/escalas': typeof AuthenticatedAppEscalasRoute
   '/_authenticated/app/mapa': typeof AuthenticatedAppMapaRoute
   '/_authenticated/app/membros': typeof AuthenticatedAppMembrosRoute
+  '/_authenticated/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRouteTypes {
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/app/escalas'
     | '/app/mapa'
     | '/app/membros'
+    | '/app/usuarios'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/app/escalas'
     | '/app/mapa'
     | '/app/membros'
+    | '/app/usuarios'
     | '/app'
   id:
     | '__root__'
@@ -178,6 +190,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/escalas'
     | '/_authenticated/app/mapa'
     | '/_authenticated/app/membros'
+    | '/_authenticated/app/usuarios'
     | '/_authenticated/app/'
   fileRoutesById: FileRoutesById
 }
@@ -215,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app/'
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/usuarios': {
+      id: '/_authenticated/app/usuarios'
+      path: '/app/usuarios'
+      fullPath: '/app/usuarios'
+      preLoaderRoute: typeof AuthenticatedAppUsuariosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app/membros': {
@@ -293,6 +313,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppEscalasRoute: typeof AuthenticatedAppEscalasRoute
   AuthenticatedAppMapaRoute: typeof AuthenticatedAppMapaRoute
   AuthenticatedAppMembrosRoute: typeof AuthenticatedAppMembrosRoute
+  AuthenticatedAppUsuariosRoute: typeof AuthenticatedAppUsuariosRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
@@ -306,6 +327,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppEscalasRoute: AuthenticatedAppEscalasRoute,
   AuthenticatedAppMapaRoute: AuthenticatedAppMapaRoute,
   AuthenticatedAppMembrosRoute: AuthenticatedAppMembrosRoute,
+  AuthenticatedAppUsuariosRoute: AuthenticatedAppUsuariosRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 

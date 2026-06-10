@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Church, Calendar, Megaphone, BookOpen,
-  MapPin, Building2, Settings, LogOut, Users2
+  MapPin, Building2, Settings, LogOut, Users2, UserCog
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -22,6 +22,7 @@ const items = [
   { title: "Avisos", url: "/app/avisos", icon: Megaphone },
   { title: "EBD", url: "/app/ebd", icon: BookOpen },
   { title: "Departamentos", url: "/app/departamentos", icon: Building2 },
+  { title: "Usuários", url: "/app/usuarios", icon: UserCog },
 ];
 
 export function AppSidebar() {
