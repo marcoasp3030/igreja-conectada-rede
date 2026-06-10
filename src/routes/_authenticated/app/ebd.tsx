@@ -175,12 +175,23 @@ function EBD() {
 
   const createClass = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("ebd_classes").insert({
-        ...newClass,
-        congregation_id: newClass.congregation_id || (congregations?.[0]?.id || ""),
-      });
+      const congId = newClass.congregation_id || congregations?.[0]?.id;
+      if (!congId) throw new Error("Congregação não selecionada");
+      
+      const payload: any = {
+        name: newClass.name,
+        category: newClass.category,
+        congregation_id: congId,
+      };
+      
+      if (newClass.teacher_id) {
+        payload.teacher_id = newClass.teacher_id;
+      }
+
+      const { error } = await supabase.from("ebd_classes").insert(payload);
       if (error) throw error;
     },
+
     onSuccess: () => {
       toast.success("Classe criada!");
       setClassDialogOpen(false);
