@@ -24,6 +24,7 @@ const items = [
   { title: "Departamentos", url: "/app/departamentos", icon: Building2 },
   { title: "Usuários", url: "/app/usuarios", icon: UserCog },
   { title: "Auditoria", url: "/app/auditoria", icon: ScrollText },
+  { title: "Mão Amiga", url: "/app/mao-amiga", icon: HeartHandshake },
 ];
 
 export function AppSidebar() {
