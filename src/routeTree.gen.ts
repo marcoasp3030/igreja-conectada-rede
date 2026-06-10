@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAppMembrosRouteImport } from './routes/_authenticated/app/membros'
 import { Route as AuthenticatedAppMapaRouteImport } from './routes/_authenticated/app/mapa'
+import { Route as AuthenticatedAppEscalasRouteImport } from './routes/_authenticated/app/escalas'
 import { Route as AuthenticatedAppEbdRouteImport } from './routes/_authenticated/app/ebd'
 import { Route as AuthenticatedAppDepartamentosRouteImport } from './routes/_authenticated/app/departamentos'
 import { Route as AuthenticatedAppCongregacoesRouteImport } from './routes/_authenticated/app/congregacoes'
@@ -49,6 +50,11 @@ const AuthenticatedAppMembrosRoute = AuthenticatedAppMembrosRouteImport.update({
 const AuthenticatedAppMapaRoute = AuthenticatedAppMapaRouteImport.update({
   id: '/app/mapa',
   path: '/app/mapa',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppEscalasRoute = AuthenticatedAppEscalasRouteImport.update({
+  id: '/app/escalas',
+  path: '/app/escalas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAppEbdRoute = AuthenticatedAppEbdRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
   '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/app/ebd': typeof AuthenticatedAppEbdRoute
+  '/app/escalas': typeof AuthenticatedAppEscalasRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
   '/app/membros': typeof AuthenticatedAppMembrosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
   '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/app/ebd': typeof AuthenticatedAppEbdRoute
+  '/app/escalas': typeof AuthenticatedAppEscalasRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
   '/app/membros': typeof AuthenticatedAppMembrosRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
   '/_authenticated/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/_authenticated/app/ebd': typeof AuthenticatedAppEbdRoute
+  '/_authenticated/app/escalas': typeof AuthenticatedAppEscalasRoute
   '/_authenticated/app/mapa': typeof AuthenticatedAppMapaRoute
   '/_authenticated/app/membros': typeof AuthenticatedAppMembrosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/app/congregacoes'
     | '/app/departamentos'
     | '/app/ebd'
+    | '/app/escalas'
     | '/app/mapa'
     | '/app/membros'
     | '/app/'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/app/congregacoes'
     | '/app/departamentos'
     | '/app/ebd'
+    | '/app/escalas'
     | '/app/mapa'
     | '/app/membros'
     | '/app'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/congregacoes'
     | '/_authenticated/app/departamentos'
     | '/_authenticated/app/ebd'
+    | '/_authenticated/app/escalas'
     | '/_authenticated/app/mapa'
     | '/_authenticated/app/membros'
     | '/_authenticated/app/'
@@ -219,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppMapaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/escalas': {
+      id: '/_authenticated/app/escalas'
+      path: '/app/escalas'
+      fullPath: '/app/escalas'
+      preLoaderRoute: typeof AuthenticatedAppEscalasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app/ebd': {
       id: '/_authenticated/app/ebd'
       path: '/app/ebd'
@@ -271,6 +290,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppCongregacoesRoute: typeof AuthenticatedAppCongregacoesRoute
   AuthenticatedAppDepartamentosRoute: typeof AuthenticatedAppDepartamentosRoute
   AuthenticatedAppEbdRoute: typeof AuthenticatedAppEbdRoute
+  AuthenticatedAppEscalasRoute: typeof AuthenticatedAppEscalasRoute
   AuthenticatedAppMapaRoute: typeof AuthenticatedAppMapaRoute
   AuthenticatedAppMembrosRoute: typeof AuthenticatedAppMembrosRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
@@ -283,6 +303,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppCongregacoesRoute: AuthenticatedAppCongregacoesRoute,
   AuthenticatedAppDepartamentosRoute: AuthenticatedAppDepartamentosRoute,
   AuthenticatedAppEbdRoute: AuthenticatedAppEbdRoute,
+  AuthenticatedAppEscalasRoute: AuthenticatedAppEscalasRoute,
   AuthenticatedAppMapaRoute: AuthenticatedAppMapaRoute,
   AuthenticatedAppMembrosRoute: AuthenticatedAppMembrosRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,

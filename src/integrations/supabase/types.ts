@@ -416,6 +416,45 @@ export type Database = {
           },
         ]
       }
+      event_schedules: {
+        Row: {
+          congregation_id: string | null
+          created_at: string | null
+          event_id: string | null
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          congregation_id?: string | null
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          congregation_id?: string | null
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_schedules_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_schedules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           congregation_id: string | null
@@ -549,6 +588,27 @@ export type Database = {
           },
         ]
       }
+      ministry_roles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -590,6 +650,107 @@ export type Database = {
           },
         ]
       }
+      schedule_assignments: {
+        Row: {
+          approved_at: string | null
+          approver_user_id: string | null
+          created_at: string | null
+          id: string
+          is_cross_congregation: boolean | null
+          rejection_reason: string | null
+          requesting_congregation_id: string | null
+          role_id: string | null
+          schedule_id: string | null
+          status: string | null
+          volunteer_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_cross_congregation?: boolean | null
+          rejection_reason?: string | null
+          requesting_congregation_id?: string | null
+          role_id?: string | null
+          schedule_id?: string | null
+          status?: string | null
+          volunteer_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approver_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_cross_congregation?: boolean | null
+          rejection_reason?: string | null
+          requesting_congregation_id?: string | null
+          role_id?: string | null
+          schedule_id?: string | null
+          status?: string | null
+          volunteer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_assignments_requesting_congregation_id_fkey"
+            columns: ["requesting_congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_assignments_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "ministry_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_assignments_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "event_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_assignments_volunteer_id_fkey"
+            columns: ["volunteer_id"]
+            isOneToOne: false
+            referencedRelation: "volunteers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          link: string | null
+          message: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           congregation_id: string | null
@@ -625,6 +786,90 @@ export type Database = {
           },
         ]
       }
+      volunteer_roles: {
+        Row: {
+          role_id: string
+          volunteer_id: string
+        }
+        Insert: {
+          role_id: string
+          volunteer_id: string
+        }
+        Update: {
+          role_id?: string
+          volunteer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "volunteer_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "ministry_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "volunteer_roles_volunteer_id_fkey"
+            columns: ["volunteer_id"]
+            isOneToOne: false
+            referencedRelation: "volunteers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      volunteers: {
+        Row: {
+          availability: string | null
+          congregation_id: string | null
+          created_at: string | null
+          id: string
+          member_id: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          availability?: string | null
+          congregation_id?: string | null
+          created_at?: string | null
+          id?: string
+          member_id?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          availability?: string | null
+          congregation_id?: string | null
+          created_at?: string | null
+          id?: string
+          member_id?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "volunteers_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "volunteers_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -633,6 +878,15 @@ export type Database = {
       can_admin_congregation: {
         Args: { _congregation_id: string; _user_id: string }
         Returns: boolean
+      }
+      check_volunteer_conflict: {
+        Args: { _event_id: string; _volunteer_id: string }
+        Returns: {
+          ends_at: string
+          event_id: string
+          starts_at: string
+          title: string
+        }[]
       }
       has_role: {
         Args: {
