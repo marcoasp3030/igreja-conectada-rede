@@ -118,7 +118,7 @@ export const assignVolunteer = createServerFn({ method: "POST" })
       .eq("id", data.schedule_id)
       .single();
 
-    if (scheduleInfo) {
+    if (scheduleInfo && scheduleInfo.event_id) {
       const { data: conflicts } = await context.supabase.rpc("check_volunteer_conflict", {
         _volunteer_id: data.volunteer_id,
         _event_id: scheduleInfo.event_id
@@ -131,7 +131,7 @@ export const assignVolunteer = createServerFn({ method: "POST" })
 
     const assignmentData = {
       ...data,
-      status: data.is_cross_congregation ? "pendente" : "aprovado"
+      status: data.is_cross_congregation ? "pendente" as const : "aprovado" as const
     };
 
     const { data: assignment, error } = await context.supabase
@@ -145,17 +145,19 @@ export const assignVolunteer = createServerFn({ method: "POST" })
     // Create notification if cross-congregation
     if (data.is_cross_congregation) {
         const { data: volunteer } = await context.supabase.from("volunteers").select("name, congregation_id").eq("id", data.volunteer_id).single();
-        // Notify pastors of the volunteer's congregation
-        const { data: roles } = await context.supabase.from("user_roles").select("user_id").eq("role", "admin_congregacao").eq("congregation_id", volunteer?.congregation_id);
-        
-        if (roles) {
-            for (const r of roles) {
-                await context.supabase.from("schedule_notifications").insert({
-                    user_id: r.user_id,
-                    title: "Nova solicitação de escala",
-                    message: `A congregação solicitou o voluntário ${volunteer?.name} para um evento.`,
-                    link: "/app/escalas?tab=approvals"
-                });
+        if (volunteer && volunteer.congregation_id) {
+            // Notify pastors of the volunteer's congregation
+            const { data: roles } = await context.supabase.from("user_roles").select("user_id").eq("role", "admin_congregacao").eq("congregation_id", volunteer.congregation_id);
+            
+            if (roles) {
+                for (const r of roles) {
+                    await context.supabase.from("schedule_notifications").insert({
+                        user_id: r.user_id,
+                        title: "Nova solicitação de escala",
+                        message: `A congregação solicitou o voluntário ${volunteer.name} para um evento.`,
+                        link: "/app/escalas?tab=approvals"
+                    });
+                }
             }
         }
     }
@@ -192,8 +194,6 @@ export const updateAssignmentStatus = createServerFn({ method: "POST" })
 export const getPendingApprovals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // Only get assignments where the volunteer belongs to a congregation the current user admins
-    // or if the user is a Sede admin.
     const { data: profile } = await context.supabase.from("profiles").select("congregation_id").eq("id", context.userId).single();
     const isSedeAdmin = context.claims.includes("admin_sede");
 
