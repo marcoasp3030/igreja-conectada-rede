@@ -13,7 +13,7 @@ export const getMinistryRoles = createServerFn({ method: "GET" })
     return data;
   });
 
-export const getVolunteers = createServerFn({ method: "GET" })
+export const getVolunteers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ congregationId: z.string().optional() }).parse(d))
   .handler(async ({ data, context }) => {
@@ -67,7 +67,7 @@ export const upsertVolunteer = createServerFn({ method: "POST" })
     return volunteer;
   });
 
-export const getEventSchedules = createServerFn({ method: "GET" })
+export const getEventSchedules = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ congregationId: z.string().optional() }).parse(d))
   .handler(async ({ data, context }) => {
