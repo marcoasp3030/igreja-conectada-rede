@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppDepartamentosRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppCongregacoesRouteImport } from './routes/_authenticated/app/congregacoes'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated/app/configuracoes'
 import { Route as AuthenticatedAppAvisosRouteImport } from './routes/_authenticated/app/avisos'
+import { Route as AuthenticatedAppAuditoriaRouteImport } from './routes/_authenticated/app/auditoria'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 
 const AuthRoute = AuthRouteImport.update({
@@ -92,6 +93,12 @@ const AuthenticatedAppAvisosRoute = AuthenticatedAppAvisosRouteImport.update({
   path: '/app/avisos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAppAuditoriaRoute =
+  AuthenticatedAppAuditoriaRouteImport.update({
+    id: '/app/auditoria',
+    path: '/app/auditoria',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
   id: '/app/agenda',
   path: '/app/agenda',
@@ -102,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/auditoria': typeof AuthenticatedAppAuditoriaRoute
   '/app/avisos': typeof AuthenticatedAppAvisosRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
@@ -117,6 +125,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/auditoria': typeof AuthenticatedAppAuditoriaRoute
   '/app/avisos': typeof AuthenticatedAppAvisosRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
@@ -134,6 +143,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/_authenticated/app/auditoria': typeof AuthenticatedAppAuditoriaRoute
   '/_authenticated/app/avisos': typeof AuthenticatedAppAvisosRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/_authenticated/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/agenda'
+    | '/app/auditoria'
     | '/app/avisos'
     | '/app/configuracoes'
     | '/app/congregacoes'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/agenda'
+    | '/app/auditoria'
     | '/app/avisos'
     | '/app/configuracoes'
     | '/app/congregacoes'
@@ -182,6 +194,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/app/agenda'
+    | '/_authenticated/app/auditoria'
     | '/_authenticated/app/avisos'
     | '/_authenticated/app/configuracoes'
     | '/_authenticated/app/congregacoes'
@@ -293,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAvisosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/auditoria': {
+      id: '/_authenticated/app/auditoria'
+      path: '/app/auditoria'
+      fullPath: '/app/auditoria'
+      preLoaderRoute: typeof AuthenticatedAppAuditoriaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app/agenda': {
       id: '/_authenticated/app/agenda'
       path: '/app/agenda'
@@ -305,6 +325,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
+  AuthenticatedAppAuditoriaRoute: typeof AuthenticatedAppAuditoriaRoute
   AuthenticatedAppAvisosRoute: typeof AuthenticatedAppAvisosRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
   AuthenticatedAppCongregacoesRoute: typeof AuthenticatedAppCongregacoesRoute
@@ -319,6 +340,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
+  AuthenticatedAppAuditoriaRoute: AuthenticatedAppAuditoriaRoute,
   AuthenticatedAppAvisosRoute: AuthenticatedAppAvisosRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
   AuthenticatedAppCongregacoesRoute: AuthenticatedAppCongregacoesRoute,
