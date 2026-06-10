@@ -29,6 +29,10 @@ function EBD() {
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedCongregation, setSelectedCongregation] = useState<string>("all");
+  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
+  const [selectedClassForAttendance, setSelectedClassForAttendance] = useState<string | null>(null);
+  const [attendanceData, setAttendanceData] = useState<Record<string, { present: boolean; justification: string }>>({});
+
   
   // Queries
   const { data: congregations } = useQuery({
@@ -79,6 +83,80 @@ function EBD() {
     },
     enabled: !!classes,
   });
+
+  const { data: students } = useQuery({
+    queryKey: ["ebd-enrollments", selectedClassForAttendance],
+    queryFn: async () => {
+      if (!selectedClassForAttendance) return [];
+      const { data, error } = await supabase
+        .from("ebd_enrollments")
+        .select("*")
+        .eq("class_id", selectedClassForAttendance)
+        .eq("status", "ativo");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedClassForAttendance,
+  });
+
+  const saveAttendance = useMutation({
+    mutationFn: async () => {
+      if (!selectedClassForAttendance) return;
+      
+      const { data: session, error: sessionError } = await supabase
+        .from("ebd_attendance_sessions")
+        .insert({
+          class_id: selectedClassForAttendance,
+          lesson_date: new Date().toISOString().split("T")[0],
+          lesson_title: "Chamada Rápida",
+        })
+        .select()
+        .single();
+        
+      if (sessionError) throw sessionError;
+
+      const records = Object.entries(attendanceData).map(([enrollmentId, data]) => ({
+        session_id: session.id,
+        enrollment_id: enrollmentId,
+        present: data.present,
+        justification: data.justification || null,
+      }));
+
+      const { error: recordsError } = await supabase
+        .from("ebd_attendance_records")
+        .insert(records);
+        
+      if (recordsError) throw recordsError;
+    },
+    onSuccess: () => {
+      toast.success("Presença registrada com sucesso!");
+      setAttendanceDialogOpen(false);
+      setAttendanceData({});
+      qc.invalidateQueries({ queryKey: ["ebd-stats"] });
+    },
+    onError: (e: Error) => toast.error("Erro ao salvar: " + e.message),
+  });
+
+  const togglePresence = (studentId: string) => {
+    setAttendanceData(prev => ({
+      ...prev,
+      [studentId]: {
+        present: !prev[studentId]?.present,
+        justification: prev[studentId]?.justification || ""
+      }
+    }));
+  };
+
+  const setJustification = (studentId: string, justification: string) => {
+    setAttendanceData(prev => ({
+      ...prev,
+      [studentId]: {
+        ...prev[studentId],
+        justification
+      }
+    }));
+  };
+
 
   return (
     <div className="space-y-6">
@@ -195,7 +273,85 @@ function EBD() {
               </CardContent>
             </Card>
           </div>
+
+          <Dialog open={attendanceDialogOpen} onOpenChange={setAttendanceDialogOpen}>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Lançamento Rápido de Presença</DialogTitle>
+                <CardDescription>Registre quem compareceu à aula hoje.</CardDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                {students?.map((student) => {
+                  const data = attendanceData[student.id] || { present: true, justification: "" };
+                  return (
+                    <div key={student.id} className="flex flex-col gap-2 rounded-lg border p-3 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white ${data.present ? 'bg-primary' : 'bg-destructive'}`}>
+                            {student.full_name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-medium">{student.full_name}</p>
+                            <p className="text-xs text-muted-foreground">{student.phone || "Sem telefone"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant={data.present ? "default" : "outline"}
+                            size="sm"
+                            className="gap-1 h-9"
+                            onClick={() => togglePresence(student.id)}
+                          >
+                            <CheckCircle2 className="h-4 w-4" /> Presente
+                          </Button>
+                          <Button 
+                            variant={!data.present ? "destructive" : "outline"}
+                            size="sm"
+                            className="gap-1 h-9"
+                            onClick={() => togglePresence(student.id)}
+                          >
+                            <XCircle className="h-4 w-4" /> Falta
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {!data.present && (
+                        <div className="mt-1 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                          <Input 
+                            placeholder="Justificativa da falta..." 
+                            className="h-8 text-xs"
+                            value={data.justification}
+                            onChange={(e) => setJustification(student.id, e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {(!students || students.length === 0) && (
+                  <div className="py-10 text-center text-muted-foreground">
+                    Carregando alunos ou nenhum aluno matriculado nesta classe.
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="sticky bottom-0 bg-background pt-2">
+                <Button variant="outline" onClick={() => setAttendanceDialogOpen(false)}>Cancelar</Button>
+                <Button 
+                  onClick={() => saveAttendance.mutate()} 
+                  disabled={saveAttendance.isPending}
+                  className="gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  {saveAttendance.isPending ? "Salvando..." : "Confirmar Chamada"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
+
 
         <TabsContent value="classes">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -226,10 +382,18 @@ function EBD() {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1">Gerenciar</Button>
-                    <Button size="sm" className="flex-1 gap-1">
+                    <Button 
+                      size="sm" 
+                      className="flex-1 gap-1"
+                      onClick={() => {
+                        setSelectedClassForAttendance(cls.id);
+                        setAttendanceDialogOpen(true);
+                      }}
+                    >
                       <CheckCircle2 className="h-3.5 w-3.5" /> Presença
                     </Button>
                   </div>
+
                 </CardContent>
               </Card>
             ))}
