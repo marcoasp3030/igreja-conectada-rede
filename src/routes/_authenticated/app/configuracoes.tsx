@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Shield, Mail, Building2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/configuracoes")({
+export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: Configuracoes,
 });
 

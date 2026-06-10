@@ -16,7 +16,7 @@ const DEPARTMENTS = [
   { key: "Teologia FAESP", name: "Teologia FAESP", desc: "Formação Teológica", icon: GraduationCap, color: "from-slate-700 to-slate-500" },
 ] as const;
 
-export const Route = createFileRoute("/_authenticated/departamentos")({
+export const Route = createFileRoute("/_authenticated/app/departamentos")({
   component: Departamentos,
 });
 

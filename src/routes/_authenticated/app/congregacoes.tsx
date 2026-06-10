@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, MapPin, Phone, Crown } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/congregacoes")({
+export const Route = createFileRoute("/_authenticated/app/congregacoes")({
   component: Congregacoes,
 });
 

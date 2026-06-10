@@ -24,7 +24,7 @@ const EVENT_TYPES = [
   { value: "ensaio", label: "Ensaio" },
 ] as const;
 
-export const Route = createFileRoute("/_authenticated/agenda")({
+export const Route = createFileRoute("/_authenticated/app/agenda")({
   component: Agenda,
 });
 

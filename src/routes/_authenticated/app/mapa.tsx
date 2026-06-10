@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/mapa")({
+export const Route = createFileRoute("/_authenticated/app/mapa")({
   component: Mapa,
 });
 

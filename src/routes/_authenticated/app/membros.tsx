@@ -16,7 +16,7 @@ import { format } from "date-fns";
 const DEPARTMENTS = ["UMADB", "UFADEB", "Alpha Kids", "CREIO", "Missoes", "Assistencia Social", "EBD", "Teologia FAESP"] as const;
 type DeptType = (typeof DEPARTMENTS)[number];
 
-export const Route = createFileRoute("/_authenticated/membros")({
+export const Route = createFileRoute("/_authenticated/app/membros")({
   component: Membros,
 });
 
