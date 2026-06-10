@@ -20,13 +20,17 @@ import { EntregaDialog } from "@/components/mao-amiga/entrega-dialog";
 import { useProfile } from "@/hooks/use-profile";
 import { supabase } from "@/integrations/supabase/client";
 
+import { useAuth } from "@/hooks/use-auth";
+
 export const Route = createFileRoute("/_authenticated/app/mao-amiga")({
   component: MaoAmigaPage,
 });
 
 function MaoAmigaPage() {
   const queryClient = useQueryClient();
-  const { data: userProfile } = useProfile(undefined); // Current user profile
+  const { user } = useAuth();
+  const { data: userProfile } = useProfile(user?.id); // Current user profile
+
   
   const [isFamiliaDialogOpen, setIsFamiliaDialogOpen] = useState(false);
   const [isDoacaoDialogOpen, setIsDoacaoDialogOpen] = useState(false);
