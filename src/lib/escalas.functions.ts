@@ -118,10 +118,11 @@ export const assignVolunteer = createServerFn({ method: "POST" })
       .eq("id", data.schedule_id)
       .single();
 
-    if (scheduleInfo && scheduleInfo.event_id) {
+    const eventId = scheduleInfo?.event_id;
+    if (eventId) {
       const { data: conflicts } = await context.supabase.rpc("check_volunteer_conflict", {
         _volunteer_id: data.volunteer_id,
-        _event_id: scheduleInfo.event_id
+        _event_id: eventId
       });
       
       if (conflicts && conflicts.length > 0) {
