@@ -146,9 +146,10 @@ export const assignVolunteer = createServerFn({ method: "POST" })
     // Create notification if cross-congregation
     if (data.is_cross_congregation) {
         const { data: volunteer } = await context.supabase.from("volunteers").select("name, congregation_id").eq("id", data.volunteer_id).single();
-        if (volunteer && volunteer.congregation_id) {
+        const volCongId = volunteer?.congregation_id;
+        if (volunteer && volCongId) {
             // Notify pastors of the volunteer's congregation
-            const { data: roles } = await context.supabase.from("user_roles").select("user_id").eq("role", "admin_congregacao").eq("congregation_id", volunteer.congregation_id);
+            const { data: roles } = await context.supabase.from("user_roles").select("user_id").eq("role", "admin_congregacao").eq("congregation_id", volCongId);
             
             if (roles) {
                 for (const r of roles) {
