@@ -255,7 +255,9 @@ function EBD() {
       setEditingStudent(null);
       setNewStudent({ full_name: "", phone: "", birth_date: "", address: "", guardian_name: "", class_id: "", status: "ativo" });
       qc.invalidateQueries({ queryKey: ["ebd-all-enrollments"] });
+      qc.invalidateQueries({ queryKey: ["ebd-enrollments"] });
     },
+
     onError: (e: Error) => toast.error(e.message),
   });
 
