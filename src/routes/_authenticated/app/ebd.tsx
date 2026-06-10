@@ -32,6 +32,22 @@ function EBD() {
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
   const [selectedClassForAttendance, setSelectedClassForAttendance] = useState<string | null>(null);
   const [attendanceData, setAttendanceData] = useState<Record<string, { present: boolean; justification: string }>>({});
+  const [classDialogOpen, setClassDialogOpen] = useState(false);
+  const [studentDialogOpen, setStudentDialogOpen] = useState(false);
+  const [newClass, setNewClass] = useState({
+    name: "",
+    category: "Adultos" as "Adultos" | "Crianças" | "Jovens" | "Homens" | "Mulheres",
+    congregation_id: "",
+    teacher_id: "",
+  });
+  const [newStudent, setNewStudent] = useState({
+    full_name: "",
+    phone: "",
+    class_id: "",
+    status: "ativo" as "ativo" | "visitante" | "transferido" | "inativo",
+    congregation_id: "",
+  });
+
 
   
   // Queries
@@ -157,6 +173,40 @@ function EBD() {
     }));
   };
 
+  const createClass = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("ebd_classes").insert({
+        ...newClass,
+        congregation_id: newClass.congregation_id || (congregations?.[0]?.id || ""),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Classe criada!");
+      setClassDialogOpen(false);
+      qc.invalidateQueries({ queryKey: ["ebd-classes"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const createStudent = useMutation({
+    mutationFn: async () => {
+      const selectedClass = classes?.find(c => c.id === newStudent.class_id);
+      const { error } = await supabase.from("ebd_enrollments").insert({
+        ...newStudent,
+        congregation_id: selectedClass?.congregation_id || congregations?.[0]?.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Aluno matriculado!");
+      setStudentDialogOpen(false);
+      qc.invalidateQueries({ queryKey: ["ebd-enrollments"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
 
   return (
     <div className="space-y-6">
@@ -177,9 +227,10 @@ function EBD() {
                 ))}
               </SelectContent>
             </Select>
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={() => setClassDialogOpen(true)}>
               <Plus className="h-4 w-4" /> Nova Classe
             </Button>
+
           </div>
         }
       />
@@ -350,7 +401,66 @@ function EBD() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          <Dialog open={classDialogOpen} onOpenChange={setClassDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nova Classe da EBD</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Nome da Classe</Label>
+                  <Input 
+                    value={newClass.name} 
+                    onChange={e => setNewClass({...newClass, name: e.target.value})}
+                    placeholder="Ex: Classe dos Adultos"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Categoria</Label>
+                  <Select 
+                    value={newClass.category} 
+                    onValueChange={(v: any) => setNewClass({...newClass, category: v})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Adultos">Adultos</SelectItem>
+                      <SelectItem value="Crianças">Crianças</SelectItem>
+                      <SelectItem value="Jovens">Jovens</SelectItem>
+                      <SelectItem value="Homens">Homens</SelectItem>
+                      <SelectItem value="Mulheres">Mulheres</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {congregations && (
+                  <div className="space-y-2">
+                    <Label>Congregação</Label>
+                    <Select 
+                      value={newClass.congregation_id} 
+                      onValueChange={v => setNewClass({...newClass, congregation_id: v})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a congregação" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {congregations.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setClassDialogOpen(false)}>Cancelar</Button>
+                <Button onClick={() => createClass.mutate()} disabled={!newClass.name}>Salvar Classe</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
+
 
 
         <TabsContent value="classes">
@@ -397,10 +507,15 @@ function EBD() {
                 </CardContent>
               </Card>
             ))}
-            <Button variant="outline" className="h-auto min-h-[200px] border-dashed flex-col gap-2">
+            <Button 
+              variant="outline" 
+              className="h-auto min-h-[200px] border-dashed flex-col gap-2"
+              onClick={() => setClassDialogOpen(true)}
+            >
               <Plus className="h-8 w-8 text-muted-foreground" />
               <span className="font-medium text-muted-foreground">Adicionar Classe</span>
             </Button>
+
           </div>
         </TabsContent>
 
@@ -417,8 +532,55 @@ function EBD() {
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Buscar aluno..." className="w-[250px] pl-8" />
                   </div>
-                  <Button size="sm">Matricular Aluno</Button>
+                  <Button size="sm" onClick={() => setStudentDialogOpen(true)}>Matricular Aluno</Button>
                 </div>
+
+                <Dialog open={studentDialogOpen} onOpenChange={setStudentDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Matricular Novo Aluno</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label>Nome Completo</Label>
+                        <Input 
+                          value={newStudent.full_name} 
+                          onChange={e => setNewStudent({...newStudent, full_name: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Telefone</Label>
+                        <Input 
+                          value={newStudent.phone} 
+                          onChange={e => setNewStudent({...newStudent, phone: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Classe</Label>
+                        <Select 
+                          value={newStudent.class_id} 
+                          onValueChange={v => setNewStudent({...newStudent, class_id: v})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a classe" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {classes?.map(c => (
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setStudentDialogOpen(false)}>Cancelar</Button>
+                      <Button onClick={() => createStudent.mutate()} disabled={!newStudent.full_name || !newStudent.class_id}>
+                        Confirmar Matrícula
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
               </div>
             </CardHeader>
             <CardContent>
