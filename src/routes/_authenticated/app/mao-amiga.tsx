@@ -14,6 +14,11 @@ import * as fns from "@/lib/mao-amiga.functions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { FamiliaDialog } from "@/components/mao-amiga/familia-dialog";
+import { DoacaoDialog } from "@/components/mao-amiga/doacao-dialog";
+import { EntregaDialog } from "@/components/mao-amiga/entrega-dialog";
+import { useProfile } from "@/hooks/use-profile";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app/mao-amiga")({
   component: MaoAmigaPage,
@@ -21,6 +26,12 @@ export const Route = createFileRoute("/_authenticated/app/mao-amiga")({
 
 function MaoAmigaPage() {
   const queryClient = useQueryClient();
+  const { data: userProfile } = useProfile(undefined); // Current user profile
+  
+  const [isFamiliaDialogOpen, setIsFamiliaDialogOpen] = useState(false);
+  const [isDoacaoDialogOpen, setIsDoacaoDialogOpen] = useState(false);
+  const [isEntregaDialogOpen, setIsEntregaDialogOpen] = useState(false);
+
   const getStats = useServerFn(fns.getMaoAmigaStats);
   const listDoadores = useServerFn(fns.listDoadores);
   const listDoacoes = useServerFn(fns.listDoacoes);
@@ -29,6 +40,11 @@ function MaoAmigaPage() {
   const listEntregas = useServerFn(fns.listEntregas);
   const listCampanhas = useServerFn(fns.listCampanhas);
   const listAvisos = useServerFn(fns.listAvisos);
+  const listCategorias = useServerFn(fns.listCategorias);
+
+  const createFamiliaFn = useServerFn(fns.createFamilia);
+  const createDoacaoFn = useServerFn(fns.createDoacao);
+  const createEntregaFn = useServerFn(fns.createEntrega);
 
   const { data: stats } = useQuery({
     queryKey: ["mao-amiga-stats"],
@@ -69,6 +85,70 @@ function MaoAmigaPage() {
     queryKey: ["mao-amiga-avisos"],
     queryFn: () => listAvisos(),
   });
+
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["mao-amiga-categorias"],
+    queryFn: () => listCategorias(),
+  });
+
+  const createFamiliaMutation = useMutation({
+    mutationFn: createFamiliaFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mao-amiga-familias"] });
+      queryClient.invalidateQueries({ queryKey: ["mao-amiga-stats"] });
+      setIsFamiliaDialogOpen(false);
+      toast.success("Família cadastrada com sucesso!");
+    },
+    onError: (error) => toast.error("Erro ao cadastrar família: " + error.message),
+  });
+
+  const createDoacaoMutation = useMutation({
+    mutationFn: createDoacaoFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mao-amiga-doacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["mao-amiga-estoque"] });
+      queryClient.invalidateQueries({ queryKey: ["mao-amiga-stats"] });
+      setIsDoacaoDialogOpen(false);
+      toast.success("Doação registrada com sucesso!");
+    },
+    onError: (error) => toast.error("Erro ao registrar doação: " + error.message),
+  });
+
+  const createEntregaMutation = useMutation({
+    mutationFn: createEntregaFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mao-amiga-entregas"] });
+      queryClient.invalidateQueries({ queryKey: ["mao-amiga-estoque"] });
+      queryClient.invalidateQueries({ queryKey: ["mao-amiga-stats"] });
+      setIsEntregaDialogOpen(false);
+      toast.success("Entrega registrada com sucesso!");
+    },
+    onError: (error) => toast.error("Erro ao registrar entrega: " + error.message),
+  });
+
+  const handleCreateFamilia = (data: any) => {
+    if (!userProfile?.profile?.congregation_id) {
+        toast.error("Congregação não identificada.");
+        return;
+    }
+    createFamiliaMutation.mutate({ data: { ...data, congregation_id: userProfile.profile.congregation_id } });
+  };
+
+  const handleCreateDoacao = (data: any) => {
+    if (!userProfile?.profile?.congregation_id) {
+        toast.error("Congregação não identificada.");
+        return;
+    }
+    createDoacaoMutation.mutate({ data: { ...data, congregation_id: userProfile.profile.congregation_id } });
+  };
+
+  const handleCreateEntrega = (data: any) => {
+    if (!userProfile?.profile?.congregation_id) {
+        toast.error("Congregação não identificada.");
+        return;
+    }
+    createEntregaMutation.mutate({ data: { ...data, congregation_id: userProfile.profile.congregation_id } });
+  };
 
   return (
     <div className="space-y-6">
@@ -167,7 +247,7 @@ function MaoAmigaPage() {
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">Registro de Doações</CardTitle>
-              <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Nova Doação</Button>
+              <Button size="sm" onClick={() => setIsDoacaoDialogOpen(true)}><Plus className="h-4 w-4 mr-2" /> Nova Doação</Button>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -255,7 +335,7 @@ function MaoAmigaPage() {
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">Famílias Assistidas</CardTitle>
-              <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Cadastrar Família</Button>
+              <Button size="sm" onClick={() => setIsFamiliaDialogOpen(true)}><Plus className="h-4 w-4 mr-2" /> Cadastrar Família</Button>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -301,7 +381,7 @@ function MaoAmigaPage() {
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">Registro de Entregas</CardTitle>
-              <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Registrar Entrega</Button>
+              <Button size="sm" onClick={() => setIsEntregaDialogOpen(true)}><Plus className="h-4 w-4 mr-2" /> Registrar Entrega</Button>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -336,6 +416,31 @@ function MaoAmigaPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <FamiliaDialog 
+        open={isFamiliaDialogOpen} 
+        onOpenChange={setIsFamiliaDialogOpen} 
+        onSubmit={handleCreateFamilia}
+        isLoading={createFamiliaMutation.isPending}
+      />
+
+      <DoacaoDialog
+        open={isDoacaoDialogOpen}
+        onOpenChange={setIsDoacaoDialogOpen}
+        onSubmit={handleCreateDoacao}
+        isLoading={createDoacaoMutation.isPending}
+        doadores={doadores}
+        categorias={categorias}
+      />
+
+      <EntregaDialog
+        open={isEntregaDialogOpen}
+        onOpenChange={setIsEntregaDialogOpen}
+        onSubmit={handleCreateEntrega}
+        isLoading={createEntregaMutation.isPending}
+        familias={familias}
+        categorias={categorias}
+      />
     </div>
   );
 }
