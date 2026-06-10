@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,17 +6,14 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { 
-  Plus, BookOpen, CalendarDays, Users, GraduationCap, 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Plus, BookOpen, CalendarDays, Users, GraduationCap,
   CheckCircle2, XCircle, AlertCircle, Filter, Search,
-  ArrowRight, ClipboardList, TrendingUp, History
+  ClipboardList, TrendingUp, Trash2, Pencil
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,31 +22,50 @@ export const Route = createFileRoute("/_authenticated/app/ebd")({
   component: EBD,
 });
 
+type ClassCategory = "Adultos" | "Crianças" | "Jovens" | "Homens" | "Mulheres";
+type StudentStatus = "ativo" | "visitante" | "transferido" | "inativo";
+
+const statusColors: Record<StudentStatus, string> = {
+  ativo: "bg-green-100 text-green-700 border-none",
+  visitante: "bg-blue-100 text-blue-700 border-none",
+  transferido: "bg-amber-100 text-amber-700 border-none",
+  inativo: "bg-gray-100 text-gray-700 border-none",
+};
+
 function EBD() {
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedCongregation, setSelectedCongregation] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Dialog states
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
   const [selectedClassForAttendance, setSelectedClassForAttendance] = useState<string | null>(null);
   const [attendanceData, setAttendanceData] = useState<Record<string, { present: boolean; justification: string }>>({});
   const [classDialogOpen, setClassDialogOpen] = useState(false);
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<any>(null);
+  const [editingStudent, setEditingStudent] = useState<any>(null);
+
+  // Attendance tab launcher
+  const [attClassId, setAttClassId] = useState<string>("");
+  const [attDate, setAttDate] = useState(new Date().toISOString().split("T")[0]);
+
   const [newClass, setNewClass] = useState({
     name: "",
-    category: "Adultos" as "Adultos" | "Crianças" | "Jovens" | "Homens" | "Mulheres",
+    category: "Adultos" as ClassCategory,
     congregation_id: "",
-    teacher_id: "",
   });
   const [newStudent, setNewStudent] = useState({
     full_name: "",
     phone: "",
+    birth_date: "",
+    address: "",
+    guardian_name: "",
     class_id: "",
-    status: "ativo" as "ativo" | "visitante" | "transferido" | "inativo",
-    congregation_id: "",
+    status: "ativo" as StudentStatus,
   });
 
-
-  
   // Queries
   const { data: congregations } = useQuery({
     queryKey: ["congregations"],
@@ -65,41 +81,35 @@ function EBD() {
     queryFn: async () => {
       let query = supabase.from("ebd_classes").select(`
         *,
-        congregation:congregations(name),
-        teacher:profiles!ebd_classes_teacher_id_fkey(full_name),
-        assistant:profiles!ebd_classes_assistant_id_fkey(full_name)
+        congregation:congregations(name)
       `);
-      
       if (selectedCongregation !== "all") {
         query = query.eq("congregation_id", selectedCongregation);
       }
-      
       const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },
   });
 
-  const { data: stats } = useQuery({
-    queryKey: ["ebd-stats", selectedCongregation],
+  const { data: allEnrollments } = useQuery({
+    queryKey: ["ebd-all-enrollments", selectedCongregation],
     queryFn: async () => {
-      let enrollQuery = supabase.from("ebd_enrollments").select("id", { count: "exact" });
+      let query = supabase.from("ebd_enrollments").select(`
+        *,
+        class:ebd_classes(name, category),
+        congregation:congregations(name)
+      `);
       if (selectedCongregation !== "all") {
-        enrollQuery = enrollQuery.eq("congregation_id", selectedCongregation);
+        query = query.eq("congregation_id", selectedCongregation);
       }
-      const { count: totalStudents } = await enrollQuery;
-
-      // Simplificando stats para MVP
-      return {
-        totalStudents: totalStudents || 0,
-        activeClasses: classes?.length || 0,
-        averageAttendance: "85%", // Mock para o dashboard
-        visitorsThisMonth: 12,    // Mock para o dashboard
-      };
+      const { data, error } = await query.order("full_name");
+      if (error) throw error;
+      return data;
     },
-    enabled: !!classes,
   });
 
+  // Students for attendance dialog
   const { data: students } = useQuery({
     queryKey: ["ebd-enrollments", selectedClassForAttendance],
     queryFn: async () => {
@@ -108,120 +118,215 @@ function EBD() {
         .from("ebd_enrollments")
         .select("*")
         .eq("class_id", selectedClassForAttendance)
-        .eq("status", "ativo");
+        .in("status", ["ativo", "visitante"])
+        .order("full_name");
       if (error) throw error;
       return data;
     },
     enabled: !!selectedClassForAttendance,
   });
 
+  // Computed stats
+  const stats = useMemo(() => {
+    const totalStudents = allEnrollments?.length || 0;
+    const activeStudents = allEnrollments?.filter(e => e.status === "ativo").length || 0;
+    const visitors = allEnrollments?.filter(e => e.status === "visitante").length || 0;
+    const activeClasses = classes?.length || 0;
+    return { totalStudents, activeStudents, visitors, activeClasses };
+  }, [allEnrollments, classes]);
+
+  const studentsByClass = useMemo(() => {
+    const map: Record<string, number> = {};
+    allEnrollments?.forEach(e => {
+      map[e.class_id] = (map[e.class_id] || 0) + 1;
+    });
+    return map;
+  }, [allEnrollments]);
+
+  // Mutations
   const saveAttendance = useMutation({
     mutationFn: async () => {
       if (!selectedClassForAttendance) return;
-      
       const { data: session, error: sessionError } = await supabase
         .from("ebd_attendance_sessions")
         .insert({
           class_id: selectedClassForAttendance,
-          lesson_date: new Date().toISOString().split("T")[0],
-          lesson_title: "Chamada Rápida",
+          lesson_date: attDate,
+          lesson_title: "Chamada",
         })
         .select()
         .single();
-        
       if (sessionError) throw sessionError;
 
-      const records = Object.entries(attendanceData).map(([enrollmentId, data]) => ({
-        session_id: session.id,
-        enrollment_id: enrollmentId,
-        present: data.present,
-        justification: data.justification || null,
-      }));
-
-      const { error: recordsError } = await supabase
-        .from("ebd_attendance_records")
-        .insert(records);
-        
-      if (recordsError) throw recordsError;
+      const records = (students || []).map(s => {
+        const d = attendanceData[s.id] || { present: true, justification: "" };
+        return {
+          session_id: session.id,
+          enrollment_id: s.id,
+          present: d.present,
+          justification: d.justification || null,
+        };
+      });
+      if (records.length === 0) return;
+      const { error } = await supabase.from("ebd_attendance_records").insert(records);
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Presença registrada com sucesso!");
       setAttendanceDialogOpen(false);
       setAttendanceData({});
-      qc.invalidateQueries({ queryKey: ["ebd-stats"] });
+      qc.invalidateQueries({ queryKey: ["ebd-all-enrollments"] });
     },
-    onError: (e: Error) => toast.error("Erro ao salvar: " + e.message),
+    onError: (e: Error) => toast.error("Erro: " + e.message),
   });
 
-  const togglePresence = (studentId: string) => {
-    setAttendanceData(prev => ({
-      ...prev,
-      [studentId]: {
-        present: !prev[studentId]?.present,
-        justification: prev[studentId]?.justification || ""
-      }
-    }));
-  };
-
-  const setJustification = (studentId: string, justification: string) => {
-    setAttendanceData(prev => ({
-      ...prev,
-      [studentId]: {
-        ...prev[studentId],
-        justification
-      }
-    }));
-  };
-
-  const createClass = useMutation({
+  const saveClass = useMutation({
     mutationFn: async () => {
       const congId = newClass.congregation_id || congregations?.[0]?.id;
-      if (!congId) throw new Error("Congregação não selecionada");
-      
-      const payload: any = {
-        name: newClass.name,
-        category: newClass.category,
-        congregation_id: congId,
-      };
-      
-      if (newClass.teacher_id) {
-        payload.teacher_id = newClass.teacher_id;
+      if (!congId) throw new Error("Selecione uma congregação");
+      if (!newClass.name) throw new Error("Informe o nome da classe");
+
+      if (editingClass) {
+        const { error } = await supabase
+          .from("ebd_classes")
+          .update({ name: newClass.name, category: newClass.category, congregation_id: congId })
+          .eq("id", editingClass.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("ebd_classes").insert({
+          name: newClass.name,
+          category: newClass.category,
+          congregation_id: congId,
+        });
+        if (error) throw error;
       }
-
-      const { error } = await supabase.from("ebd_classes").insert(payload);
-      if (error) throw error;
     },
-
     onSuccess: () => {
-      toast.success("Classe criada!");
+      toast.success(editingClass ? "Classe atualizada!" : "Classe criada!");
       setClassDialogOpen(false);
+      setEditingClass(null);
+      setNewClass({ name: "", category: "Adultos", congregation_id: "" });
       qc.invalidateQueries({ queryKey: ["ebd-classes"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const createStudent = useMutation({
-    mutationFn: async () => {
-      const selectedClass = classes?.find(c => c.id === newStudent.class_id);
-      const congId = selectedClass?.congregation_id || congregations?.[0]?.id;
-      if (!congId) throw new Error("Congregação não encontrada");
-      
-      const { error } = await supabase.from("ebd_enrollments").insert({
-        ...newStudent,
-        congregation_id: congId,
-      });
-
+  const deleteClass = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("ebd_classes").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Aluno matriculado!");
-      setStudentDialogOpen(false);
-      qc.invalidateQueries({ queryKey: ["ebd-enrollments"] });
+      toast.success("Classe removida");
+      qc.invalidateQueries({ queryKey: ["ebd-classes"] });
+      qc.invalidateQueries({ queryKey: ["ebd-all-enrollments"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const saveStudent = useMutation({
+    mutationFn: async () => {
+      const selectedClass = classes?.find(c => c.id === newStudent.class_id);
+      if (!selectedClass) throw new Error("Selecione uma classe");
+      if (!newStudent.full_name) throw new Error("Informe o nome do aluno");
 
+      const payload: any = {
+        full_name: newStudent.full_name,
+        phone: newStudent.phone || null,
+        birth_date: newStudent.birth_date || null,
+        address: newStudent.address || null,
+        guardian_name: newStudent.guardian_name || null,
+        class_id: newStudent.class_id,
+        status: newStudent.status,
+        congregation_id: selectedClass.congregation_id,
+      };
+
+      if (editingStudent) {
+        const { error } = await supabase.from("ebd_enrollments").update(payload).eq("id", editingStudent.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("ebd_enrollments").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success(editingStudent ? "Aluno atualizado!" : "Aluno matriculado!");
+      setStudentDialogOpen(false);
+      setEditingStudent(null);
+      setNewStudent({ full_name: "", phone: "", birth_date: "", address: "", guardian_name: "", class_id: "", status: "ativo" });
+      qc.invalidateQueries({ queryKey: ["ebd-all-enrollments"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteStudent = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("ebd_enrollments").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Aluno removido");
+      qc.invalidateQueries({ queryKey: ["ebd-all-enrollments"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Helpers
+  const togglePresence = (sid: string) => {
+    setAttendanceData(p => ({
+      ...p,
+      [sid]: { present: !(p[sid]?.present ?? true), justification: p[sid]?.justification || "" },
+    }));
+  };
+  const setJustification = (sid: string, j: string) => {
+    setAttendanceData(p => ({ ...p, [sid]: { present: p[sid]?.present ?? false, justification: j } }));
+  };
+
+  const openNewClass = () => {
+    setEditingClass(null);
+    setNewClass({ name: "", category: "Adultos", congregation_id: selectedCongregation !== "all" ? selectedCongregation : "" });
+    setClassDialogOpen(true);
+  };
+  const openEditClass = (cls: any) => {
+    setEditingClass(cls);
+    setNewClass({ name: cls.name, category: cls.category, congregation_id: cls.congregation_id });
+    setClassDialogOpen(true);
+  };
+  const openNewStudent = () => {
+    setEditingStudent(null);
+    setNewStudent({ full_name: "", phone: "", birth_date: "", address: "", guardian_name: "", class_id: "", status: "ativo" });
+    setStudentDialogOpen(true);
+  };
+  const openEditStudent = (s: any) => {
+    setEditingStudent(s);
+    setNewStudent({
+      full_name: s.full_name,
+      phone: s.phone || "",
+      birth_date: s.birth_date || "",
+      address: s.address || "",
+      guardian_name: s.guardian_name || "",
+      class_id: s.class_id,
+      status: s.status,
+    });
+    setStudentDialogOpen(true);
+  };
+
+  const startAttendance = (classId: string) => {
+    if (!classId) {
+      toast.error("Selecione uma classe primeiro");
+      return;
+    }
+    setSelectedClassForAttendance(classId);
+    setAttendanceData({});
+    setAttendanceDialogOpen(true);
+  };
+
+  const filteredStudents = useMemo(() => {
+    if (!allEnrollments) return [];
+    if (!searchTerm) return allEnrollments;
+    const q = searchTerm.toLowerCase();
+    return allEnrollments.filter(s => s.full_name.toLowerCase().includes(q));
+  }, [allEnrollments, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -242,10 +347,9 @@ function EBD() {
                 ))}
               </SelectContent>
             </Select>
-            <Button className="gap-2" onClick={() => setClassDialogOpen(true)}>
+            <Button className="gap-2" onClick={openNewClass}>
               <Plus className="h-4 w-4" /> Nova Classe
             </Button>
-
           </div>
         }
       />
@@ -258,6 +362,7 @@ function EBD() {
           <TabsTrigger value="attendance" className="gap-2"><ClipboardList className="h-4 w-4" /> Presença</TabsTrigger>
         </TabsList>
 
+        {/* DASHBOARD */}
         <TabsContent value="dashboard" className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
@@ -266,8 +371,8 @@ function EBD() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalStudents}</div>
-                <p className="text-xs text-muted-foreground">Matriculados ativos</p>
+                <div className="text-2xl font-bold">{stats.totalStudents}</div>
+                <p className="text-xs text-muted-foreground">Matriculados</p>
               </CardContent>
             </Card>
             <Card>
@@ -276,18 +381,18 @@ function EBD() {
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats?.activeClasses}</div>
+                <div className="text-2xl font-bold">{stats.activeClasses}</div>
                 <p className="text-xs text-muted-foreground">Turmas em funcionamento</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Freq. Média</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Alunos Ativos</CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats?.averageAttendance}</div>
-                <p className="text-xs text-muted-foreground">Últimos 30 dias</p>
+                <div className="text-2xl font-bold text-green-600">{stats.activeStudents}</div>
+                <p className="text-xs text-muted-foreground">Com matrícula ativa</p>
               </CardContent>
             </Card>
             <Card>
@@ -296,188 +401,33 @@ function EBD() {
                 <Plus className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">+{stats?.visitorsThisMonth}</div>
-                <p className="text-xs text-muted-foreground">Novos este mês</p>
+                <div className="text-2xl font-bold text-blue-600">{stats.visitors}</div>
+                <p className="text-xs text-muted-foreground">Em acompanhamento</p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><History className="h-5 w-5 text-primary" /> Últimas Aulas</CardTitle>
-                <CardDescription>Resumo das lições ministradas recentemente.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Mock data for visualization */}
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-1">
-                      <p className="font-medium">Lição {10 + i}: A Graça de Deus</p>
-                      <p className="text-xs text-muted-foreground">Classe: Adultos · 08/06/2026</p>
-                    </div>
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">92% Presença</Badge>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-primary" /> Próxima Aula</CardTitle>
-                <CardDescription>Prepare-se para o próximo domingo.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-xl bg-gradient-hero p-6 text-white">
-                  <p className="text-xs font-medium uppercase tracking-wider text-gold">14 de Junho, 2026</p>
-                  <h3 className="mt-2 text-xl font-bold">A Importância da Oração</h3>
-                  <p className="mt-1 text-sm opacity-90">Referência: 1 Tessalonicenses 5:17</p>
-                  <Button variant="secondary" size="sm" className="mt-4 gap-2">
-                    Ver Material <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Dialog open={attendanceDialogOpen} onOpenChange={setAttendanceDialogOpen}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Lançamento Rápido de Presença</DialogTitle>
-                <CardDescription>Registre quem compareceu à aula hoje.</CardDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4 py-4">
-                {students?.map((student) => {
-                  const data = attendanceData[student.id] || { present: true, justification: "" };
-                  return (
-                    <div key={student.id} className="flex flex-col gap-2 rounded-lg border p-3 hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white ${data.present ? 'bg-primary' : 'bg-destructive'}`}>
-                            {student.full_name.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{student.full_name}</p>
-                            <p className="text-xs text-muted-foreground">{student.phone || "Sem telefone"}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button 
-                            variant={data.present ? "default" : "outline"}
-                            size="sm"
-                            className="gap-1 h-9"
-                            onClick={() => togglePresence(student.id)}
-                          >
-                            <CheckCircle2 className="h-4 w-4" /> Presente
-                          </Button>
-                          <Button 
-                            variant={!data.present ? "destructive" : "outline"}
-                            size="sm"
-                            className="gap-1 h-9"
-                            onClick={() => togglePresence(student.id)}
-                          >
-                            <XCircle className="h-4 w-4" /> Falta
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      {!data.present && (
-                        <div className="mt-1 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                          <AlertCircle className="h-4 w-4 text-destructive" />
-                          <Input 
-                            placeholder="Justificativa da falta..." 
-                            className="h-8 text-xs"
-                            value={data.justification}
-                            onChange={(e) => setJustification(student.id, e.target.value)}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                {(!students || students.length === 0) && (
-                  <div className="py-10 text-center text-muted-foreground">
-                    Carregando alunos ou nenhum aluno matriculado nesta classe.
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter className="sticky bottom-0 bg-background pt-2">
-                <Button variant="outline" onClick={() => setAttendanceDialogOpen(false)}>Cancelar</Button>
-                <Button 
-                  onClick={() => saveAttendance.mutate()} 
-                  disabled={saveAttendance.isPending}
-                  className="gap-2"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  {saveAttendance.isPending ? "Salvando..." : "Confirmar Chamada"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={classDialogOpen} onOpenChange={setClassDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nova Classe da EBD</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Nome da Classe</Label>
-                  <Input 
-                    value={newClass.name} 
-                    onChange={e => setNewClass({...newClass, name: e.target.value})}
-                    placeholder="Ex: Classe dos Adultos"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Categoria</Label>
-                  <Select 
-                    value={newClass.category} 
-                    onValueChange={(v: any) => setNewClass({...newClass, category: v})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Adultos">Adultos</SelectItem>
-                      <SelectItem value="Crianças">Crianças</SelectItem>
-                      <SelectItem value="Jovens">Jovens</SelectItem>
-                      <SelectItem value="Homens">Homens</SelectItem>
-                      <SelectItem value="Mulheres">Mulheres</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {congregations && (
-                  <div className="space-y-2">
-                    <Label>Congregação</Label>
-                    <Select 
-                      value={newClass.congregation_id} 
-                      onValueChange={v => setNewClass({...newClass, congregation_id: v})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a congregação" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {congregations.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setClassDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={() => createClass.mutate()} disabled={!newClass.name}>Salvar Classe</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Card>
+            <CardHeader>
+              <CardTitle>Lançamento Rápido de Presença</CardTitle>
+              <CardDescription>Selecione uma classe e registre a chamada em segundos.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-3">
+              <Select value={attClassId} onValueChange={setAttClassId}>
+                <SelectTrigger><SelectValue placeholder="Selecione a classe" /></SelectTrigger>
+                <SelectContent>
+                  {classes?.map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.congregation?.name})</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Input type="date" value={attDate} onChange={e => setAttDate(e.target.value)} />
+              <Button onClick={() => startAttendance(attClassId)} className="gap-2">
+                <ClipboardList className="h-4 w-4" /> Iniciar Chamada
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-
-
+        {/* CLASSES */}
         <TabsContent value="classes">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {classes?.map((cls) => (
@@ -491,53 +441,49 @@ function EBD() {
                   <CardTitle className="mt-2">{cls.name}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Professor:</span>
-                      <span className="font-medium">{cls.teacher?.full_name || "Não definido"}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Auxiliar:</span>
-                      <span className="font-medium">{cls.assistant?.full_name || "-"}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Total Alunos:</span>
-                      <span className="font-medium">24</span>
-                    </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Total Alunos:</span>
+                    <span className="font-medium">{studentsByClass[cls.id] || 0}</span>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">Gerenciar</Button>
-                    <Button 
-                      size="sm" 
-                      className="flex-1 gap-1"
+                    <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => openEditClass(cls)}>
+                      <Pencil className="h-3.5 w-3.5" /> Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
                       onClick={() => {
-                        setSelectedClassForAttendance(cls.id);
-                        setAttendanceDialogOpen(true);
+                        if (confirm(`Excluir a classe "${cls.name}"? Esta ação não pode ser desfeita.`)) {
+                          deleteClass.mutate(cls.id);
+                        }
                       }}
                     >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                    <Button size="sm" className="flex-1 gap-1" onClick={() => startAttendance(cls.id)}>
                       <CheckCircle2 className="h-3.5 w-3.5" /> Presença
                     </Button>
                   </div>
-
                 </CardContent>
               </Card>
             ))}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="h-auto min-h-[200px] border-dashed flex-col gap-2"
-              onClick={() => setClassDialogOpen(true)}
+              onClick={openNewClass}
             >
               <Plus className="h-8 w-8 text-muted-foreground" />
               <span className="font-medium text-muted-foreground">Adicionar Classe</span>
             </Button>
-
           </div>
         </TabsContent>
 
+        {/* STUDENTS */}
         <TabsContent value="students">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <CardTitle>Listagem de Alunos</CardTitle>
                   <CardDescription>Gerencie as matrículas e dados dos alunos da EBD.</CardDescription>
@@ -545,61 +491,19 @@ function EBD() {
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Buscar aluno..." className="w-[250px] pl-8" />
+                    <Input
+                      placeholder="Buscar aluno..."
+                      className="w-[250px] pl-8"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                    />
                   </div>
-                  <Button size="sm" onClick={() => setStudentDialogOpen(true)}>Matricular Aluno</Button>
+                  <Button size="sm" onClick={openNewStudent}>Matricular Aluno</Button>
                 </div>
-
-                <Dialog open={studentDialogOpen} onOpenChange={setStudentDialogOpen}>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Matricular Novo Aluno</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label>Nome Completo</Label>
-                        <Input 
-                          value={newStudent.full_name} 
-                          onChange={e => setNewStudent({...newStudent, full_name: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Telefone</Label>
-                        <Input 
-                          value={newStudent.phone} 
-                          onChange={e => setNewStudent({...newStudent, phone: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Classe</Label>
-                        <Select 
-                          value={newStudent.class_id} 
-                          onValueChange={v => setNewStudent({...newStudent, class_id: v})}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a classe" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {classes?.map(c => (
-                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setStudentDialogOpen(false)}>Cancelar</Button>
-                      <Button onClick={() => createStudent.mutate()} disabled={!newStudent.full_name || !newStudent.class_id}>
-                        Confirmar Matrícula
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-
               </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50">
                     <tr className="border-b text-left font-medium">
@@ -611,24 +515,33 @@ function EBD() {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="p-4 font-medium">João Silva dos Santos</td>
-                      <td className="p-4">Adultos - Manhã</td>
-                      <td className="p-4"><Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Ativo</Badge></td>
-                      <td className="p-4 text-muted-foreground">Sede</td>
-                      <td className="p-4 text-right">
-                        <Button variant="ghost" size="sm">Editar</Button>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="p-4 font-medium">Maria Oliveira</td>
-                      <td className="p-4">Crianças (4-6 anos)</td>
-                      <td className="p-4"><Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none">Visitante</Badge></td>
-                      <td className="p-4 text-muted-foreground">Betel</td>
-                      <td className="p-4 text-right">
-                        <Button variant="ghost" size="sm">Editar</Button>
-                      </td>
-                    </tr>
+                    {filteredStudents.map(s => (
+                      <tr key={s.id} className="hover:bg-muted/50 transition-colors">
+                        <td className="p-4 font-medium">{s.full_name}</td>
+                        <td className="p-4">{s.class?.name}</td>
+                        <td className="p-4">
+                          <Badge className={statusColors[s.status as StudentStatus]}>{s.status}</Badge>
+                        </td>
+                        <td className="p-4 text-muted-foreground">{s.congregation?.name}</td>
+                        <td className="p-4 text-right space-x-1">
+                          <Button variant="ghost" size="sm" onClick={() => openEditStudent(s)}>Editar</Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { if (confirm(`Remover ${s.full_name}?`)) deleteStudent.mutate(s.id); }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredStudents.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                          Nenhum aluno encontrado.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -636,8 +549,9 @@ function EBD() {
           </Card>
         </TabsContent>
 
+        {/* ATTENDANCE TAB */}
         <TabsContent value="attendance">
-           <Card>
+          <Card>
             <CardHeader>
               <CardTitle>Lançamento de Presença</CardTitle>
               <CardDescription>Selecione a classe e a data para registrar a frequência.</CardDescription>
@@ -646,35 +560,207 @@ function EBD() {
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Classe</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a classe" />
-                    </SelectTrigger>
+                  <Select value={attClassId} onValueChange={setAttClassId}>
+                    <SelectTrigger><SelectValue placeholder="Selecione a classe" /></SelectTrigger>
                     <SelectContent>
-                      {classes?.map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
+                      {classes?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Data da Aula</Label>
-                  <Input type="date" defaultValue={new Date().toISOString().split("T")[0]} />
+                  <Input type="date" value={attDate} onChange={e => setAttDate(e.target.value)} />
                 </div>
                 <div className="flex items-end">
-                  <Button className="w-full gap-2"><ClipboardList className="h-4 w-4" /> Iniciar Chamada</Button>
+                  <Button className="w-full gap-2" onClick={() => startAttendance(attClassId)}>
+                    <ClipboardList className="h-4 w-4" /> Iniciar Chamada
+                  </Button>
                 </div>
               </div>
 
               <div className="rounded-xl border bg-muted/30 p-8 text-center">
                 <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
-                <h3 className="mt-4 text-lg font-medium">Nenhuma classe selecionada</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Selecione uma classe acima para visualizar a lista de alunos e realizar a chamada.</p>
+                <h3 className="mt-4 text-lg font-medium">Clique em "Iniciar Chamada"</h3>
+                <p className="mt-1 text-sm text-muted-foreground">A lista de alunos abrirá em uma janela para você marcar presença e justificativas.</p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* ATTENDANCE DIALOG */}
+      <Dialog open={attendanceDialogOpen} onOpenChange={setAttendanceDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Lançamento Rápido de Presença</DialogTitle>
+            <DialogDescription>Marque presença ou falta de cada aluno e adicione justificativas se necessário.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {students?.map(student => {
+              const data = attendanceData[student.id] || { present: true, justification: "" };
+              return (
+                <div key={student.id} className="flex flex-col gap-2 rounded-lg border p-3 hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white ${data.present ? 'bg-primary' : 'bg-destructive'}`}>
+                        {student.full_name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-medium">{student.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{student.phone || "Sem telefone"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={data.present ? "default" : "outline"}
+                        size="sm"
+                        className="gap-1 h-9"
+                        onClick={() => !data.present && togglePresence(student.id)}
+                      >
+                        <CheckCircle2 className="h-4 w-4" /> Presente
+                      </Button>
+                      <Button
+                        variant={!data.present ? "destructive" : "outline"}
+                        size="sm"
+                        className="gap-1 h-9"
+                        onClick={() => data.present && togglePresence(student.id)}
+                      >
+                        <XCircle className="h-4 w-4" /> Falta
+                      </Button>
+                    </div>
+                  </div>
+                  {!data.present && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                      <Input
+                        placeholder="Justificativa da falta..."
+                        className="h-8 text-xs"
+                        value={data.justification}
+                        onChange={e => setJustification(student.id, e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {(!students || students.length === 0) && (
+              <div className="py-10 text-center text-muted-foreground">
+                Nenhum aluno matriculado nesta classe.
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAttendanceDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => saveAttendance.mutate()} disabled={saveAttendance.isPending || !students?.length} className="gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              {saveAttendance.isPending ? "Salvando..." : "Confirmar Chamada"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* CLASS DIALOG */}
+      <Dialog open={classDialogOpen} onOpenChange={setClassDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingClass ? "Editar Classe" : "Nova Classe da EBD"}</DialogTitle>
+            <DialogDescription>Cadastre uma turma da Escola Bíblica Dominical.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nome da Classe</Label>
+              <Input value={newClass.name} onChange={e => setNewClass({ ...newClass, name: e.target.value })} placeholder="Ex: Classe dos Adultos" />
+            </div>
+            <div className="space-y-2">
+              <Label>Categoria</Label>
+              <Select value={newClass.category} onValueChange={(v: any) => setNewClass({ ...newClass, category: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Adultos">Adultos</SelectItem>
+                  <SelectItem value="Crianças">Crianças</SelectItem>
+                  <SelectItem value="Jovens">Jovens</SelectItem>
+                  <SelectItem value="Homens">Homens</SelectItem>
+                  <SelectItem value="Mulheres">Mulheres</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Congregação</Label>
+              <Select value={newClass.congregation_id} onValueChange={v => setNewClass({ ...newClass, congregation_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione a congregação" /></SelectTrigger>
+                <SelectContent>
+                  {congregations?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClassDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => saveClass.mutate()} disabled={saveClass.isPending || !newClass.name}>
+              {saveClass.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* STUDENT DIALOG */}
+      <Dialog open={studentDialogOpen} onOpenChange={setStudentDialogOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingStudent ? "Editar Aluno" : "Matricular Novo Aluno"}</DialogTitle>
+            <DialogDescription>Cadastro de matrícula da EBD.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Nome Completo</Label>
+              <Input value={newStudent.full_name} onChange={e => setNewStudent({ ...newStudent, full_name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone</Label>
+              <Input value={newStudent.phone} onChange={e => setNewStudent({ ...newStudent, phone: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Data de Nascimento</Label>
+              <Input type="date" value={newStudent.birth_date} onChange={e => setNewStudent({ ...newStudent, birth_date: e.target.value })} />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Endereço</Label>
+              <Input value={newStudent.address} onChange={e => setNewStudent({ ...newStudent, address: e.target.value })} />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Responsável (se criança)</Label>
+              <Input value={newStudent.guardian_name} onChange={e => setNewStudent({ ...newStudent, guardian_name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Classe</Label>
+              <Select value={newStudent.class_id} onValueChange={v => setNewStudent({ ...newStudent, class_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {classes?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={newStudent.status} onValueChange={(v: any) => setNewStudent({ ...newStudent, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="visitante">Visitante</SelectItem>
+                  <SelectItem value="transferido">Transferido</SelectItem>
+                  <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStudentDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => saveStudent.mutate()} disabled={saveStudent.isPending || !newStudent.full_name || !newStudent.class_id}>
+              {saveStudent.isPending ? "Salvando..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
