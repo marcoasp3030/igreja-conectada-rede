@@ -2,6 +2,17 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+async function isSedeAdmin(supabase: any, userId: string) {
+  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+  return (data ?? []).some((r: any) => r.role === "admin_sede");
+}
+
+async function getUserCongregation(supabase: any, userId: string) {
+  const { data } = await supabase.from("profiles").select("congregation_id").eq("id", userId).single();
+  return data?.congregation_id as string | null;
+}
+
+
 // Schemas
 const doadorSchema = z.object({
   id: z.string().optional(),
