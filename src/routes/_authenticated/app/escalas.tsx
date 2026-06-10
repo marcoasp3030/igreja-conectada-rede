@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { 
   Plus, Users2, Calendar, Search, Filter, CheckCircle2, 
   XCircle, Clock, Bell, Settings, ArrowRightLeft, UserPlus
@@ -32,41 +33,41 @@ export const Route = createFileRoute("/_authenticated/app/escalas")({
 function Escalas() {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const { data: profile } = useProfile(user?.id);
+  const { data: profileData } = useProfile(user?.id);
   const [activeTab, setActiveTab] = useState("calendar");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCong, setFilterCong] = useState("all");
-  const [filterRole, setFilterRole] = useState("all");
+
+  const getVolunteersFn = useServerFn(functions.getVolunteers);
+  const getRolesFn = useServerFn(functions.getMinistryRoles);
+  const getSchedulesFn = useServerFn(functions.getEventSchedules);
+  const getApprovalsFn = useServerFn(functions.getPendingApprovals);
+  const saveVolunteerFn = useServerFn(functions.upsertVolunteer);
+  const updateStatusFn = useServerFn(functions.updateAssignmentStatus);
 
   // Dialog states
   const [volunteerDialogOpen, setVolunteerDialogOpen] = useState(false);
-  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   
   // Queries
-  const { data: congregations } = useQuery({
-    queryKey: ["congregations-list"],
-    queryFn: async () => (await functions.getVolunteers({ congregationId: "" })).map(v => v.congregations).filter((v, i, a) => a.findIndex(t => t?.name === v?.name) === i)
-  });
-
   const { data: roles } = useQuery({
     queryKey: ["ministry-roles"],
-    queryFn: () => functions.getMinistryRoles()
+    queryFn: () => getRolesFn()
   });
 
   const { data: volunteers } = useQuery({
     queryKey: ["volunteers", filterCong],
-    queryFn: () => functions.getVolunteers({ congregationId: filterCong === "all" ? undefined : filterCong })
+    queryFn: () => getVolunteersFn({ data: { congregationId: filterCong === "all" ? undefined : filterCong } })
   });
 
   const { data: schedules } = useQuery({
     queryKey: ["event-schedules", filterCong],
-    queryFn: () => functions.getEventSchedules({ congregationId: filterCong === "all" ? undefined : filterCong })
+    queryFn: () => getSchedulesFn({ data: { congregationId: filterCong === "all" ? undefined : filterCong } })
   });
 
   const { data: pendingApprovals } = useQuery({
     queryKey: ["pending-approvals"],
-    queryFn: () => functions.getPendingApprovals()
+    queryFn: () => getApprovalsFn()
   });
 
   // Volunteer Form State
@@ -75,7 +76,7 @@ function Escalas() {
   });
 
   const saveVolunteer = useMutation({
-    mutationFn: (data: any) => functions.upsertVolunteer(data),
+    mutationFn: (data: any) => saveVolunteerFn({ data }),
     onSuccess: () => {
       toast.success("Voluntário salvo com sucesso!");
       qc.invalidateQueries({ queryKey: ["volunteers"] });
@@ -85,7 +86,7 @@ function Escalas() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: (data: any) => functions.updateAssignmentStatus(data),
+    mutationFn: (data: any) => updateStatusFn({ data }),
     onSuccess: () => {
       toast.success("Status atualizado!");
       qc.invalidateQueries({ queryKey: ["event-schedules"] });
@@ -93,6 +94,19 @@ function Escalas() {
     },
     onError: (e: any) => toast.error(e.message)
   });
+
+  const congregations = useMemo(() => {
+    if (!volunteers) return [];
+    const names = new Set();
+    const list: any[] = [];
+    volunteers.forEach((v: any) => {
+      if (v.congregations && !names.has(v.congregations.name)) {
+        names.add(v.congregations.name);
+        list.push({ id: v.congregation_id, name: v.congregations.name });
+      }
+    });
+    return list;
+  }, [volunteers]);
 
   return (
     <div className="space-y-6">
@@ -121,10 +135,10 @@ function Escalas() {
           <TabsTrigger value="calendar" className="gap-2"><Calendar className="h-4 w-4" /> Agenda</TabsTrigger>
           <TabsTrigger value="volunteers" className="gap-2"><Users2 className="h-4 w-4" /> Voluntários</TabsTrigger>
           <TabsTrigger value="active" className="gap-2"><Clock className="h-4 w-4" /> Escalas</TabsTrigger>
-          {profile?.isCongregacaoAdmin && (
+          {profileData?.isCongregacaoAdmin && (
             <TabsTrigger value="approvals" className="gap-2"><CheckCircle2 className="h-4 w-4" /> Aprovações</TabsTrigger>
           )}
-          {profile?.isSedeAdmin && (
+          {profileData?.isSedeAdmin && (
             <TabsTrigger value="sede" className="gap-2"><Settings className="h-4 w-4" /> Painel Sede</TabsTrigger>
           )}
         </TabsList>
@@ -147,10 +161,7 @@ function Escalas() {
                           <span>{s.congregations?.name}</span>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => {
-                        setSelectedEvent(s);
-                        setAssignmentDialogOpen(true);
-                      }}>Gerenciar Escala</Button>
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedEvent(s)}> Gerenciar Escala</Button>
                     </div>
                   ))}
                   {(!schedules || schedules.length === 0) && (
@@ -197,13 +208,15 @@ function Escalas() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {/* Aqui viria o mapeamento real das congregações */}
+                {congregations.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {volunteers?.filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase())).map((v: any) => (
+            {volunteers?.filter((v: any) => v.name.toLowerCase().includes(searchTerm.toLowerCase())).map((v: any) => (
               <Card key={v.id}>
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center gap-3">
@@ -296,7 +309,7 @@ function Escalas() {
             <div className="space-y-2">
               <Label>Funções Ministeriais</Label>
               <div className="grid grid-cols-2 gap-2 max-h-[150px] overflow-y-auto p-2 border rounded-md">
-                {roles?.map((r) => (
+                {roles?.map((r: any) => (
                   <div key={r.id} className="flex items-center gap-2">
                     <Checkbox 
                       id={r.id} 
@@ -324,7 +337,7 @@ function Escalas() {
             <Button variant="outline" onClick={() => setVolunteerDialogOpen(false)}>Cancelar</Button>
             <Button onClick={() => saveVolunteer.mutate({
               ...volunteerForm,
-              congregation_id: profile?.congregation_id
+              congregation_id: profileData?.profile?.congregation_id
             })}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
