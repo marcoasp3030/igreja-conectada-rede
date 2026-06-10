@@ -14,16 +14,416 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      announcements: {
+        Row: {
+          body: string
+          congregation_id: string | null
+          created_at: string
+          created_by: string | null
+          department: Database["public"]["Enums"]["department_type"] | null
+          expires_at: string | null
+          id: string
+          is_global: boolean
+          priority: string
+          published_at: string
+          title: string
+        }
+        Insert: {
+          body: string
+          congregation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
+          expires_at?: string | null
+          id?: string
+          is_global?: boolean
+          priority?: string
+          published_at?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          congregation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
+          expires_at?: string | null
+          id?: string
+          is_global?: boolean
+          priority?: string
+          published_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      congregations: {
+        Row: {
+          active_departments: string[] | null
+          address: string | null
+          assistant_pastors: string | null
+          city: string | null
+          created_at: string
+          id: string
+          is_headquarters: boolean
+          latitude: number | null
+          lead_pastor: string | null
+          longitude: number | null
+          name: string
+          phone: string | null
+          service_schedule: Json | null
+          state: string | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          active_departments?: string[] | null
+          address?: string | null
+          assistant_pastors?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          is_headquarters?: boolean
+          latitude?: number | null
+          lead_pastor?: string | null
+          longitude?: number | null
+          name: string
+          phone?: string | null
+          service_schedule?: Json | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          active_departments?: string[] | null
+          address?: string | null
+          assistant_pastors?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          is_headquarters?: boolean
+          latitude?: number | null
+          lead_pastor?: string | null
+          longitude?: number | null
+          name?: string
+          phone?: string | null
+          service_schedule?: Json | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      ebd_lessons: {
+        Row: {
+          congregation_id: string | null
+          content: string | null
+          created_at: string
+          created_by: string | null
+          daily_readings: Json | null
+          id: string
+          is_global: boolean
+          lesson_date: string
+          notice: string | null
+          reference: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          congregation_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          daily_readings?: Json | null
+          id?: string
+          is_global?: boolean
+          lesson_date: string
+          notice?: string | null
+          reference?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          congregation_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          daily_readings?: Json | null
+          id?: string
+          is_global?: boolean
+          lesson_date?: string
+          notice?: string | null
+          reference?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ebd_lessons_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          congregation_id: string | null
+          created_at: string
+          created_by: string | null
+          department: Database["public"]["Enums"]["department_type"] | null
+          description: string | null
+          ends_at: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          id: string
+          is_global: boolean
+          location: string | null
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          congregation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
+          description?: string | null
+          ends_at?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          is_global?: boolean
+          location?: string | null
+          starts_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          congregation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
+          description?: string | null
+          ends_at?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          is_global?: boolean
+          location?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          active: boolean
+          address: string | null
+          address_number: string | null
+          birth_date: string | null
+          city: string | null
+          congregation_id: string
+          created_at: string
+          department: Database["public"]["Enums"]["department_type"] | null
+          email: string | null
+          full_name: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          neighborhood: string | null
+          notes: string | null
+          phone: string | null
+          position: string | null
+          state: string | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          address_number?: string | null
+          birth_date?: string | null
+          city?: string | null
+          congregation_id: string
+          created_at?: string
+          department?: Database["public"]["Enums"]["department_type"] | null
+          email?: string | null
+          full_name: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          neighborhood?: string | null
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          address_number?: string | null
+          birth_date?: string | null
+          city?: string | null
+          congregation_id?: string
+          created_at?: string
+          department?: Database["public"]["Enums"]["department_type"] | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          neighborhood?: string | null
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          congregation_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          congregation_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          congregation_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          congregation_id: string | null
+          created_at: string
+          department: Database["public"]["Enums"]["department_type"] | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          congregation_id?: string | null
+          created_at?: string
+          department?: Database["public"]["Enums"]["department_type"] | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          congregation_id?: string | null
+          created_at?: string
+          department?: Database["public"]["Enums"]["department_type"] | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_admin_congregation: {
+        Args: { _congregation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_sede_admin: { Args: { _user_id: string }; Returns: boolean }
+      user_congregation: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "admin_sede"
+        | "admin_congregacao"
+        | "lider_departamento"
+        | "membro"
+      department_type:
+        | "UMADB"
+        | "UFADEB"
+        | "Alpha Kids"
+        | "CREIO"
+        | "Missoes"
+        | "Assistencia Social"
+        | "EBD"
+        | "Teologia FAESP"
+      event_type:
+        | "culto"
+        | "evento"
+        | "festividade"
+        | "reuniao"
+        | "escala"
+        | "ensaio"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +550,31 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "admin_sede",
+        "admin_congregacao",
+        "lider_departamento",
+        "membro",
+      ],
+      department_type: [
+        "UMADB",
+        "UFADEB",
+        "Alpha Kids",
+        "CREIO",
+        "Missoes",
+        "Assistencia Social",
+        "EBD",
+        "Teologia FAESP",
+      ],
+      event_type: [
+        "culto",
+        "evento",
+        "festividade",
+        "reuniao",
+        "escala",
+        "ensaio",
+      ],
+    },
   },
 } as const
