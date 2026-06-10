@@ -7,12 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Plus, BookOpen, CalendarDays } from "lucide-react";
+import { 
+  Plus, BookOpen, CalendarDays, Users, GraduationCap, 
+  CheckCircle2, XCircle, AlertCircle, Filter, Search,
+  ArrowRight, ClipboardList, TrendingUp, History
+} from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/app/ebd")({
   component: EBD,
@@ -20,133 +27,313 @@ export const Route = createFileRoute("/_authenticated/app/ebd")({
 
 function EBD() {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const empty = { title: "", reference: "", lesson_date: "", content: "", notice: "", daily_readings: "" };
-  const [form, setForm] = useState(empty);
-
-  const { data: lessons } = useQuery({
-    queryKey: ["ebd-lessons"],
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedCongregation, setSelectedCongregation] = useState<string>("all");
+  
+  // Queries
+  const { data: congregations } = useQuery({
+    queryKey: ["congregations"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("ebd_lessons").select("*").order("lesson_date", { ascending: false });
+      const { data, error } = await supabase.from("congregations").select("*").order("name");
       if (error) throw error;
       return data;
     },
   });
 
-  const create = useMutation({
-    mutationFn: async () => {
-      const readings = form.daily_readings.split("\n").map((l) => l.trim()).filter(Boolean)
-        .map((line) => {
-          const [day, ...rest] = line.split(":");
-          return { day: day.trim(), reading: rest.join(":").trim() };
-        });
-      const { error } = await supabase.from("ebd_lessons").insert({
-        title: form.title,
-        reference: form.reference || null,
-        lesson_date: form.lesson_date,
-        content: form.content || null,
-        notice: form.notice || null,
-        daily_readings: readings,
-        is_global: true,
-      });
+  const { data: classes } = useQuery({
+    queryKey: ["ebd-classes", selectedCongregation],
+    queryFn: async () => {
+      let query = supabase.from("ebd_classes").select(`
+        *,
+        congregation:congregations(name),
+        teacher:profiles!ebd_classes_teacher_id_fkey(full_name),
+        assistant:profiles!ebd_classes_assistant_id_fkey(full_name)
+      `);
+      
+      if (selectedCongregation !== "all") {
+        query = query.eq("congregation_id", selectedCongregation);
+      }
+      
+      const { data, error } = await query.order("name");
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
-      toast.success("Lição publicada!");
-      qc.invalidateQueries({ queryKey: ["ebd-lessons"] });
-      setOpen(false);
-      setForm(empty);
-    },
-    onError: (e: Error) => toast.error(e.message),
   });
 
-  const current = lessons?.[0];
+  const { data: stats } = useQuery({
+    queryKey: ["ebd-stats", selectedCongregation],
+    queryFn: async () => {
+      let enrollQuery = supabase.from("ebd_enrollments").select("id", { count: "exact" });
+      if (selectedCongregation !== "all") {
+        enrollQuery = enrollQuery.eq("congregation_id", selectedCongregation);
+      }
+      const { count: totalStudents } = await enrollQuery;
+
+      // Simplificando stats para MVP
+      return {
+        totalStudents: totalStudents || 0,
+        activeClasses: classes?.length || 0,
+        averageAttendance: "85%", // Mock para o dashboard
+        visitorsThisMonth: 12,    // Mock para o dashboard
+      };
+    },
+    enabled: !!classes,
+  });
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Escola Bíblica Dominical"
-        description="Lições, leitura diária e avisos da EBD."
+        description="Gestão de classes, alunos e presenças da EBD."
         actions={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Nova lição</Button></DialogTrigger>
-            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-              <DialogHeader><DialogTitle>Nova lição da EBD</DialogTitle></DialogHeader>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2"><Label>Título</Label>
-                  <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Referência bíblica</Label>
-                  <Input placeholder="Ex.: Romanos 12:1-2" value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Data</Label>
-                  <Input type="date" value={form.lesson_date} onChange={(e) => setForm({ ...form, lesson_date: e.target.value })} /></div>
-                <div className="space-y-2 sm:col-span-2"><Label>Conteúdo</Label>
-                  <Textarea rows={5} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Leitura diária (uma por linha — formato: Dia: Referência)</Label>
-                  <Textarea rows={4} placeholder="Segunda: Salmo 1&#10;Terça: Salmo 23&#10;..." value={form.daily_readings} onChange={(e) => setForm({ ...form, daily_readings: e.target.value })} />
-                </div>
-                <div className="space-y-2 sm:col-span-2"><Label>Aviso</Label>
-                  <Textarea rows={2} value={form.notice} onChange={(e) => setForm({ ...form, notice: e.target.value })} /></div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                <Button onClick={() => create.mutate()} disabled={create.isPending || !form.title || !form.lesson_date}>
-                  {create.isPending ? "Publicando..." : "Publicar"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-3">
+            <Select value={selectedCongregation} onValueChange={setSelectedCongregation}>
+              <SelectTrigger className="w-[200px]">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Congregação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Congregações</SelectItem>
+                {congregations?.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" /> Nova Classe
+            </Button>
+          </div>
         }
       />
 
-      {current && (
-        <Card className="mb-6 shadow-card overflow-hidden">
-          <div className="bg-gradient-hero p-6 text-primary-foreground">
-            <p className="text-xs uppercase tracking-wider text-gold">Lição atual · {format(new Date(current.lesson_date), "PPP", { locale: ptBR })}</p>
-            <h2 className="mt-2 text-2xl font-semibold">{current.title}</h2>
-            {current.reference && <p className="mt-1 text-sm text-primary-foreground/85">{current.reference}</p>}
-          </div>
-          <CardContent className="p-6">
-            {current.content && <p className="whitespace-pre-wrap text-sm leading-relaxed">{current.content}</p>}
-            {Array.isArray(current.daily_readings) && current.daily_readings.length > 0 && (
-              <div className="mt-4 rounded-lg border bg-muted/40 p-4">
-                <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><CalendarDays className="h-4 w-4 text-primary" /> Leitura diária</p>
-                <ul className="space-y-1 text-sm">
-                  {(current.daily_readings as { day: string; reading: string }[]).map((r, i) => (
-                    <li key={i}><span className="font-medium">{r.day}:</span> <span className="text-muted-foreground">{r.reading}</span></li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {current.notice && (
-              <div className="mt-4 rounded-lg border-l-4 border-gold bg-gold/10 p-3 text-sm">
-                <p className="font-semibold text-gold">Aviso</p>
-                <p className="mt-1 text-muted-foreground">{current.notice}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsTrigger value="dashboard" className="gap-2"><TrendingUp className="h-4 w-4" /> Dashboard</TabsTrigger>
+          <TabsTrigger value="classes" className="gap-2"><Users className="h-4 w-4" /> Classes</TabsTrigger>
+          <TabsTrigger value="students" className="gap-2"><GraduationCap className="h-4 w-4" /> Alunos</TabsTrigger>
+          <TabsTrigger value="attendance" className="gap-2"><ClipboardList className="h-4 w-4" /> Presença</TabsTrigger>
+        </TabsList>
 
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary" /> Histórico de lições</CardTitle>
-        </CardHeader>
-        <CardContent className="divide-y p-0">
-          {(lessons ?? []).slice(1).map((l) => (
-            <div key={l.id} className="flex items-center justify-between p-4">
-              <div>
-                <p className="font-medium">{l.title}</p>
-                {l.reference && <p className="text-xs text-muted-foreground">{l.reference}</p>}
+        <TabsContent value="dashboard" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.totalStudents}</div>
+                <p className="text-xs text-muted-foreground">Matriculados ativos</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Classes Ativas</CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.activeClasses}</div>
+                <p className="text-xs text-muted-foreground">Turmas em funcionamento</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Freq. Média</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{stats?.averageAttendance}</div>
+                <p className="text-xs text-muted-foreground">Últimos 30 dias</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Visitantes</CardTitle>
+                <Plus className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">+{stats?.visitorsThisMonth}</div>
+                <p className="text-xs text-muted-foreground">Novos este mês</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><History className="h-5 w-5 text-primary" /> Últimas Aulas</CardTitle>
+                <CardDescription>Resumo das lições ministradas recentemente.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Mock data for visualization */}
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-1">
+                      <p className="font-medium">Lição {10 + i}: A Graça de Deus</p>
+                      <p className="text-xs text-muted-foreground">Classe: Adultos · 08/06/2026</p>
+                    </div>
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">92% Presença</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-primary" /> Próxima Aula</CardTitle>
+                <CardDescription>Prepare-se para o próximo domingo.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-xl bg-gradient-hero p-6 text-white">
+                  <p className="text-xs font-medium uppercase tracking-wider text-gold">14 de Junho, 2026</p>
+                  <h3 className="mt-2 text-xl font-bold">A Importância da Oração</h3>
+                  <p className="mt-1 text-sm opacity-90">Referência: 1 Tessalonicenses 5:17</p>
+                  <Button variant="secondary" size="sm" className="mt-4 gap-2">
+                    Ver Material <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="classes">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {classes?.map((cls) => (
+              <Card key={cls.id} className="overflow-hidden shadow-card transition-all hover:shadow-md">
+                <div className="h-2 bg-primary" />
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary">{cls.category}</Badge>
+                    <p className="text-xs text-muted-foreground">{cls.congregation?.name}</p>
+                  </div>
+                  <CardTitle className="mt-2">{cls.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Professor:</span>
+                      <span className="font-medium">{cls.teacher?.full_name || "Não definido"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Auxiliar:</span>
+                      <span className="font-medium">{cls.assistant?.full_name || "-"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Total Alunos:</span>
+                      <span className="font-medium">24</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1">Gerenciar</Button>
+                    <Button size="sm" className="flex-1 gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Presença
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            <Button variant="outline" className="h-auto min-h-[200px] border-dashed flex-col gap-2">
+              <Plus className="h-8 w-8 text-muted-foreground" />
+              <span className="font-medium text-muted-foreground">Adicionar Classe</span>
+            </Button>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="students">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Listagem de Alunos</CardTitle>
+                  <CardDescription>Gerencie as matrículas e dados dos alunos da EBD.</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Buscar aluno..." className="w-[250px] pl-8" />
+                  </div>
+                  <Button size="sm">Matricular Aluno</Button>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">{format(new Date(l.lesson_date), "PPP", { locale: ptBR })}</p>
-            </div>
-          ))}
-          {(!lessons || lessons.length === 0) && (
-            <div className="p-8 text-center text-sm text-muted-foreground">Nenhuma lição cadastrada.</div>
-          )}
-        </CardContent>
-      </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr className="border-b text-left font-medium">
+                      <th className="p-4">Nome</th>
+                      <th className="p-4">Classe</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Congregação</th>
+                      <th className="p-4 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    <tr className="hover:bg-muted/50 transition-colors">
+                      <td className="p-4 font-medium">João Silva dos Santos</td>
+                      <td className="p-4">Adultos - Manhã</td>
+                      <td className="p-4"><Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Ativo</Badge></td>
+                      <td className="p-4 text-muted-foreground">Sede</td>
+                      <td className="p-4 text-right">
+                        <Button variant="ghost" size="sm">Editar</Button>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-muted/50 transition-colors">
+                      <td className="p-4 font-medium">Maria Oliveira</td>
+                      <td className="p-4">Crianças (4-6 anos)</td>
+                      <td className="p-4"><Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none">Visitante</Badge></td>
+                      <td className="p-4 text-muted-foreground">Betel</td>
+                      <td className="p-4 text-right">
+                        <Button variant="ghost" size="sm">Editar</Button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="attendance">
+           <Card>
+            <CardHeader>
+              <CardTitle>Lançamento de Presença</CardTitle>
+              <CardDescription>Selecione a classe e a data para registrar a frequência.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Classe</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a classe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classes?.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Data da Aula</Label>
+                  <Input type="date" defaultValue={new Date().toISOString().split("T")[0]} />
+                </div>
+                <div className="flex items-end">
+                  <Button className="w-full gap-2"><ClipboardList className="h-4 w-4" /> Iniciar Chamada</Button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border bg-muted/30 p-8 text-center">
+                <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
+                <h3 className="mt-4 text-lg font-medium">Nenhuma classe selecionada</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Selecione uma classe acima para visualizar a lista de alunos e realizar a chamada.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
