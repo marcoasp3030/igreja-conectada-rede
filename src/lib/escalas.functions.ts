@@ -13,7 +13,7 @@ export const getMinistryRoles = createServerFn({ method: "GET" })
     return data;
   });
 
-export const getVolunteers = createServerFn({ method: "GET" })
+export const getVolunteers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ congregationId: z.string().optional() }).parse(d))
   .handler(async ({ data, context }) => {
@@ -67,7 +67,7 @@ export const upsertVolunteer = createServerFn({ method: "POST" })
     return volunteer;
   });
 
-export const getEventSchedules = createServerFn({ method: "GET" })
+export const getEventSchedules = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ congregationId: z.string().optional() }).parse(d))
   .handler(async ({ data, context }) => {
@@ -118,10 +118,11 @@ export const assignVolunteer = createServerFn({ method: "POST" })
       .eq("id", data.schedule_id)
       .single();
 
-    if (scheduleInfo && scheduleInfo.event_id) {
+    const eventId = scheduleInfo?.event_id;
+    if (eventId) {
       const { data: conflicts } = await context.supabase.rpc("check_volunteer_conflict", {
         _volunteer_id: data.volunteer_id,
-        _event_id: scheduleInfo.event_id
+        _event_id: eventId
       });
       
       if (conflicts && conflicts.length > 0) {
@@ -145,9 +146,10 @@ export const assignVolunteer = createServerFn({ method: "POST" })
     // Create notification if cross-congregation
     if (data.is_cross_congregation) {
         const { data: volunteer } = await context.supabase.from("volunteers").select("name, congregation_id").eq("id", data.volunteer_id).single();
-        if (volunteer && volunteer.congregation_id) {
+        const volCongId = volunteer?.congregation_id;
+        if (volunteer && volCongId) {
             // Notify pastors of the volunteer's congregation
-            const { data: roles } = await context.supabase.from("user_roles").select("user_id").eq("role", "admin_congregacao").eq("congregation_id", volunteer.congregation_id);
+            const { data: roles } = await context.supabase.from("user_roles").select("user_id").eq("role", "admin_congregacao").eq("congregation_id", volCongId);
             
             if (roles) {
                 for (const r of roles) {
