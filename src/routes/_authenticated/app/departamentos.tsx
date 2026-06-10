@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { DepartmentForm } from "@/components/departments/department-form";
 import { useProfile } from "@/hooks/use-profile";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
 
 type Departamento = Database["public"]["Tables"]["departamentos"]["Row"];
+
 
 const ICON_MAP: Record<string, any> = {
   Users2, Heart, Baby, Globe, HandHelping, BookOpen, GraduationCap, Sparkles
