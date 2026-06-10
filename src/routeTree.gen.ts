@@ -9,38 +9,188 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
+import { Route as AuthenticatedAppMembrosRouteImport } from './routes/_authenticated/app/membros'
+import { Route as AuthenticatedAppMapaRouteImport } from './routes/_authenticated/app/mapa'
+import { Route as AuthenticatedAppEbdRouteImport } from './routes/_authenticated/app/ebd'
+import { Route as AuthenticatedAppDepartamentosRouteImport } from './routes/_authenticated/app/departamentos'
+import { Route as AuthenticatedAppCongregacoesRouteImport } from './routes/_authenticated/app/congregacoes'
+import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated/app/configuracoes'
+import { Route as AuthenticatedAppAvisosRouteImport } from './routes/_authenticated/app/avisos'
+import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/app/',
+  path: '/app/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppMembrosRoute = AuthenticatedAppMembrosRouteImport.update({
+  id: '/app/membros',
+  path: '/app/membros',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppMapaRoute = AuthenticatedAppMapaRouteImport.update({
+  id: '/app/mapa',
+  path: '/app/mapa',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppEbdRoute = AuthenticatedAppEbdRouteImport.update({
+  id: '/app/ebd',
+  path: '/app/ebd',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppDepartamentosRoute =
+  AuthenticatedAppDepartamentosRouteImport.update({
+    id: '/app/departamentos',
+    path: '/app/departamentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppCongregacoesRoute =
+  AuthenticatedAppCongregacoesRouteImport.update({
+    id: '/app/congregacoes',
+    path: '/app/congregacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppConfiguracoesRoute =
+  AuthenticatedAppConfiguracoesRouteImport.update({
+    id: '/app/configuracoes',
+    path: '/app/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppAvisosRoute = AuthenticatedAppAvisosRouteImport.update({
+  id: '/app/avisos',
+  path: '/app/avisos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
+  id: '/app/agenda',
+  path: '/app/agenda',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/avisos': typeof AuthenticatedAppAvisosRoute
+  '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
+  '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
+  '/app/ebd': typeof AuthenticatedAppEbdRoute
+  '/app/mapa': typeof AuthenticatedAppMapaRoute
+  '/app/membros': typeof AuthenticatedAppMembrosRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/avisos': typeof AuthenticatedAppAvisosRoute
+  '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
+  '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
+  '/app/ebd': typeof AuthenticatedAppEbdRoute
+  '/app/mapa': typeof AuthenticatedAppMapaRoute
+  '/app/membros': typeof AuthenticatedAppMembrosRoute
+  '/app': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/_authenticated/app/avisos': typeof AuthenticatedAppAvisosRoute
+  '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/_authenticated/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
+  '/_authenticated/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
+  '/_authenticated/app/ebd': typeof AuthenticatedAppEbdRoute
+  '/_authenticated/app/mapa': typeof AuthenticatedAppMapaRoute
+  '/_authenticated/app/membros': typeof AuthenticatedAppMembrosRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/app/agenda'
+    | '/app/avisos'
+    | '/app/configuracoes'
+    | '/app/congregacoes'
+    | '/app/departamentos'
+    | '/app/ebd'
+    | '/app/mapa'
+    | '/app/membros'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/app/agenda'
+    | '/app/avisos'
+    | '/app/configuracoes'
+    | '/app/congregacoes'
+    | '/app/departamentos'
+    | '/app/ebd'
+    | '/app/mapa'
+    | '/app/membros'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/app/agenda'
+    | '/_authenticated/app/avisos'
+    | '/_authenticated/app/configuracoes'
+    | '/_authenticated/app/congregacoes'
+    | '/_authenticated/app/departamentos'
+    | '/_authenticated/app/ebd'
+    | '/_authenticated/app/mapa'
+    | '/_authenticated/app/membros'
+    | '/_authenticated/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +198,103 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/app'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/membros': {
+      id: '/_authenticated/app/membros'
+      path: '/app/membros'
+      fullPath: '/app/membros'
+      preLoaderRoute: typeof AuthenticatedAppMembrosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/mapa': {
+      id: '/_authenticated/app/mapa'
+      path: '/app/mapa'
+      fullPath: '/app/mapa'
+      preLoaderRoute: typeof AuthenticatedAppMapaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/ebd': {
+      id: '/_authenticated/app/ebd'
+      path: '/app/ebd'
+      fullPath: '/app/ebd'
+      preLoaderRoute: typeof AuthenticatedAppEbdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/departamentos': {
+      id: '/_authenticated/app/departamentos'
+      path: '/app/departamentos'
+      fullPath: '/app/departamentos'
+      preLoaderRoute: typeof AuthenticatedAppDepartamentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/congregacoes': {
+      id: '/_authenticated/app/congregacoes'
+      path: '/app/congregacoes'
+      fullPath: '/app/congregacoes'
+      preLoaderRoute: typeof AuthenticatedAppCongregacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/configuracoes': {
+      id: '/_authenticated/app/configuracoes'
+      path: '/app/configuracoes'
+      fullPath: '/app/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAppConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/avisos': {
+      id: '/_authenticated/app/avisos'
+      path: '/app/avisos'
+      fullPath: '/app/avisos'
+      preLoaderRoute: typeof AuthenticatedAppAvisosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/agenda': {
+      id: '/_authenticated/app/agenda'
+      path: '/app/agenda'
+      fullPath: '/app/agenda'
+      preLoaderRoute: typeof AuthenticatedAppAgendaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
+  AuthenticatedAppAvisosRoute: typeof AuthenticatedAppAvisosRoute
+  AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
+  AuthenticatedAppCongregacoesRoute: typeof AuthenticatedAppCongregacoesRoute
+  AuthenticatedAppDepartamentosRoute: typeof AuthenticatedAppDepartamentosRoute
+  AuthenticatedAppEbdRoute: typeof AuthenticatedAppEbdRoute
+  AuthenticatedAppMapaRoute: typeof AuthenticatedAppMapaRoute
+  AuthenticatedAppMembrosRoute: typeof AuthenticatedAppMembrosRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
+  AuthenticatedAppAvisosRoute: AuthenticatedAppAvisosRoute,
+  AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
+  AuthenticatedAppCongregacoesRoute: AuthenticatedAppCongregacoesRoute,
+  AuthenticatedAppDepartamentosRoute: AuthenticatedAppDepartamentosRoute,
+  AuthenticatedAppEbdRoute: AuthenticatedAppEbdRoute,
+  AuthenticatedAppMapaRoute: AuthenticatedAppMapaRoute,
+  AuthenticatedAppMembrosRoute: AuthenticatedAppMembrosRoute,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
