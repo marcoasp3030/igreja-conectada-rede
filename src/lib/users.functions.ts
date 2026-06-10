@@ -14,6 +14,62 @@ async function getUserCongregation(supabase: any, userId: string) {
   return data?.congregation_id as string | null;
 }
 
+async function getUserSummary(admin: any, userId: string) {
+  const { data: p } = await admin
+    .from("profiles")
+    .select("full_name, email, congregation_id")
+    .eq("id", userId)
+    .maybeSingle();
+  const { data: r } = await admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+  return {
+    full_name: p?.full_name ?? null,
+    email: p?.email ?? null,
+    congregation_id: p?.congregation_id ?? null,
+    roles: (r ?? []).map((x: any) => x.role) as string[],
+  };
+}
+
+async function writeAudit(
+  admin: any,
+  params: {
+    action: "create" | "update" | "role_change" | "password_reset" | "delete";
+    actorUserId: string;
+    targetUserId: string | null;
+    targetEmail?: string | null;
+    targetName?: string | null;
+    congregationId?: string | null;
+    changes?: Record<string, any>;
+  },
+) {
+  const { data: actor } = await admin
+    .from("profiles").select("full_name").eq("id", params.actorUserId).maybeSingle();
+  await admin.from("user_audit_logs").insert({
+    action: params.action,
+    target_user_id: params.targetUserId,
+    target_user_email: params.targetEmail ?? null,
+    target_user_name: params.targetName ?? null,
+    actor_user_id: params.actorUserId,
+    actor_user_name: actor?.full_name ?? null,
+    congregation_id: params.congregationId ?? null,
+    changes: params.changes ?? {},
+  });
+}
+
+function diffFields(before: Record<string, any>, after: Record<string, any>, fields: string[]) {
+  const out: Record<string, { from: any; to: any }> = {};
+  for (const f of fields) {
+    const a = before?.[f] ?? null;
+    const b = after?.[f] ?? null;
+    const aStr = Array.isArray(a) ? JSON.stringify([...a].sort()) : JSON.stringify(a);
+    const bStr = Array.isArray(b) ? JSON.stringify([...b].sort()) : JSON.stringify(b);
+    if (aStr !== bStr) out[f] = { from: a, to: b };
+  }
+  return out;
+}
+
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -60,7 +116,6 @@ export const createUser = createServerFn({ method: "POST" })
     const sede = await isSedeAdmin(context.supabase, context.userId);
     const myCong = await getUserCongregation(context.supabase, context.userId);
 
-    // Authorization
     if (!sede) {
       if (data.role === "admin_sede") throw new Error("Sem permissão para criar admin da sede.");
       if (!myCong || data.congregation_id !== myCong) {
@@ -79,19 +134,33 @@ export const createUser = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const newId = created.user!.id;
 
-    // Update profile (trigger already inserted base row)
     await supabaseAdmin.from("profiles").update({
       full_name: data.full_name,
       phone: data.phone ?? null,
       congregation_id: data.congregation_id ?? null,
     }).eq("id", newId);
 
-    // Reset roles and set chosen role
     await supabaseAdmin.from("user_roles").delete().eq("user_id", newId);
     await supabaseAdmin.from("user_roles").insert({
       user_id: newId,
       role: data.role,
       congregation_id: data.congregation_id ?? null,
+    });
+
+    await writeAudit(supabaseAdmin, {
+      action: "create",
+      actorUserId: context.userId,
+      targetUserId: newId,
+      targetEmail: data.email,
+      targetName: data.full_name,
+      congregationId: data.congregation_id ?? null,
+      changes: {
+        full_name: { from: null, to: data.full_name },
+        email: { from: null, to: data.email },
+        phone: { from: null, to: data.phone ?? null },
+        congregation_id: { from: null, to: data.congregation_id ?? null },
+        role: { from: null, to: data.role },
+      },
     });
 
     return { id: newId };
@@ -111,12 +180,11 @@ export const updateUser = createServerFn({ method: "POST" })
     const myCong = await getUserCongregation(context.supabase, context.userId);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: target } = await supabaseAdmin
-      .from("profiles").select("congregation_id").eq("id", data.user_id).single();
+    const before = await getUserSummary(supabaseAdmin, data.user_id);
 
     if (!sede) {
       if (data.role === "admin_sede") throw new Error("Sem permissão.");
-      if (!myCong || target?.congregation_id !== myCong) throw new Error("Sem permissão.");
+      if (!myCong || before.congregation_id !== myCong) throw new Error("Sem permissão.");
       if (data.congregation_id && data.congregation_id !== myCong) throw new Error("Sem permissão.");
     }
 
@@ -128,14 +196,39 @@ export const updateUser = createServerFn({ method: "POST" })
       await supabaseAdmin.from("profiles").update(profileUpdate).eq("id", data.user_id);
     }
 
+    const roleChanged = !!data.role && !before.roles.includes(data.role);
     if (data.role) {
       await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
       await supabaseAdmin.from("user_roles").insert({
         user_id: data.user_id,
         role: data.role,
-        congregation_id: data.congregation_id ?? target?.congregation_id ?? null,
+        congregation_id: data.congregation_id ?? before.congregation_id ?? null,
       });
     }
+
+    const after = await getUserSummary(supabaseAdmin, data.user_id);
+    const changes = diffFields(before, after, ["full_name", "congregation_id", "roles"]);
+    if (data.phone !== undefined && (before as any)) {
+      // phone is not in summary; compare directly via input intent
+      const { data: p } = await supabaseAdmin
+        .from("profiles").select("phone").eq("id", data.user_id).maybeSingle();
+      const newPhone = p?.phone ?? null;
+      // we don't have prior phone snapshot — log only the new value if changed via input
+      if (data.phone !== undefined) changes.phone = { from: null, to: newPhone };
+    }
+
+    if (Object.keys(changes).length > 0) {
+      await writeAudit(supabaseAdmin, {
+        action: roleChanged ? "role_change" : "update",
+        actorUserId: context.userId,
+        targetUserId: data.user_id,
+        targetEmail: after.email,
+        targetName: after.full_name,
+        congregationId: after.congregation_id,
+        changes,
+      });
+    }
+
     return { ok: true };
   });
 
@@ -149,13 +242,22 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     const sede = await isSedeAdmin(context.supabase, context.userId);
     const myCong = await getUserCongregation(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const target = await getUserSummary(supabaseAdmin, data.user_id);
     if (!sede) {
-      const { data: target } = await supabaseAdmin
-        .from("profiles").select("congregation_id").eq("id", data.user_id).single();
-      if (!myCong || target?.congregation_id !== myCong) throw new Error("Sem permissão.");
+      if (!myCong || target.congregation_id !== myCong) throw new Error("Sem permissão.");
     }
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, { password: data.password });
     if (error) throw new Error(error.message);
+
+    await writeAudit(supabaseAdmin, {
+      action: "password_reset",
+      actorUserId: context.userId,
+      targetUserId: data.user_id,
+      targetEmail: target.email,
+      targetName: target.full_name,
+      congregationId: target.congregation_id,
+      changes: { password: { from: "***", to: "***" } },
+    });
     return { ok: true };
   });
 
@@ -167,13 +269,26 @@ export const deleteUser = createServerFn({ method: "POST" })
     const sede = await isSedeAdmin(context.supabase, context.userId);
     const myCong = await getUserCongregation(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const target = await getUserSummary(supabaseAdmin, data.user_id);
     if (!sede) {
-      const { data: target } = await supabaseAdmin
-        .from("profiles").select("congregation_id").eq("id", data.user_id).single();
-      if (!myCong || target?.congregation_id !== myCong) throw new Error("Sem permissão.");
+      if (!myCong || target.congregation_id !== myCong) throw new Error("Sem permissão.");
     }
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
     if (error) throw new Error(error.message);
+
+    await writeAudit(supabaseAdmin, {
+      action: "delete",
+      actorUserId: context.userId,
+      targetUserId: data.user_id,
+      targetEmail: target.email,
+      targetName: target.full_name,
+      congregationId: target.congregation_id,
+      changes: {
+        full_name: { from: target.full_name, to: null },
+        email: { from: target.email, to: null },
+        roles: { from: target.roles, to: [] },
+      },
+    });
     return { ok: true };
   });
 
@@ -187,4 +302,33 @@ export const listCongregationsLite = createServerFn({ method: "GET" })
     const { data, error } = await q;
     if (error) throw error;
     return data ?? [];
+  });
+
+export const listUserAuditLogs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({
+    target_user_id: z.string().uuid().optional(),
+    action: z.string().optional(),
+    limit: z.number().int().min(1).max(500).optional(),
+  }).optional().parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const sede = await isSedeAdmin(context.supabase, context.userId);
+    const myCong = await getUserCongregation(context.supabase, context.userId);
+
+    let q = context.supabase
+      .from("user_audit_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(data?.limit ?? 200);
+
+    if (!sede) {
+      if (!myCong) return [];
+      q = q.eq("congregation_id", myCong);
+    }
+    if (data?.target_user_id) q = q.eq("target_user_id", data.target_user_id);
+    if (data?.action) q = q.eq("action", data.action);
+
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
   });
