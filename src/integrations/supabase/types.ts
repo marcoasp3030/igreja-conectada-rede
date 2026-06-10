@@ -511,6 +511,444 @@ export type Database = {
           },
         ]
       }
+      mao_amiga_avisos: {
+        Row: {
+          campanha_id: string | null
+          congregation_id: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          mensagem: string
+          titulo: string
+          urgente: boolean | null
+        }
+        Insert: {
+          campanha_id?: string | null
+          congregation_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          mensagem: string
+          titulo: string
+          urgente?: boolean | null
+        }
+        Update: {
+          campanha_id?: string | null
+          congregation_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          mensagem?: string
+          titulo?: string
+          urgente?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mao_amiga_avisos_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "mao_amiga_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mao_amiga_avisos_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mao_amiga_campanhas: {
+        Row: {
+          congregation_id: string
+          created_at: string | null
+          descricao: string | null
+          ends_at: string | null
+          id: string
+          meta: string | null
+          starts_at: string | null
+          status: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          congregation_id: string
+          created_at?: string | null
+          descricao?: string | null
+          ends_at?: string | null
+          id?: string
+          meta?: string | null
+          starts_at?: string | null
+          status?: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          congregation_id?: string
+          created_at?: string | null
+          descricao?: string | null
+          ends_at?: string | null
+          id?: string
+          meta?: string | null
+          starts_at?: string | null
+          status?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mao_amiga_campanhas_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mao_amiga_categorias: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      mao_amiga_doacoes: {
+        Row: {
+          categoria_id: string
+          congregation_id: string
+          created_at: string | null
+          created_by: string | null
+          data_doacao: string
+          descricao: string
+          doador_id: string
+          id: string
+          observacoes: string | null
+          quantidade: number
+          unidade: string
+          valor_dinheiro: number | null
+        }
+        Insert: {
+          categoria_id: string
+          congregation_id: string
+          created_at?: string | null
+          created_by?: string | null
+          data_doacao?: string
+          descricao: string
+          doador_id: string
+          id?: string
+          observacoes?: string | null
+          quantidade?: number
+          unidade?: string
+          valor_dinheiro?: number | null
+        }
+        Update: {
+          categoria_id?: string
+          congregation_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          data_doacao?: string
+          descricao?: string
+          doador_id?: string
+          id?: string
+          observacoes?: string | null
+          quantidade?: number
+          unidade?: string
+          valor_dinheiro?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mao_amiga_doacoes_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "mao_amiga_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mao_amiga_doacoes_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mao_amiga_doacoes_doador_id_fkey"
+            columns: ["doador_id"]
+            isOneToOne: false
+            referencedRelation: "mao_amiga_doadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mao_amiga_doadores: {
+        Row: {
+          congregation_id: string
+          created_at: string | null
+          email: string | null
+          id: string
+          member_id: string | null
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          congregation_id: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          member_id?: string | null
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          congregation_id?: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          member_id?: string | null
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mao_amiga_doadores_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mao_amiga_doadores_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mao_amiga_entregas: {
+        Row: {
+          categoria_id: string
+          congregation_id: string
+          created_at: string | null
+          data_entrega: string
+          descricao: string
+          familia_id: string
+          id: string
+          observacoes: string | null
+          quantidade: number
+          responsavel_id: string | null
+        }
+        Insert: {
+          categoria_id: string
+          congregation_id: string
+          created_at?: string | null
+          data_entrega?: string
+          descricao: string
+          familia_id: string
+          id?: string
+          observacoes?: string | null
+          quantidade: number
+          responsavel_id?: string | null
+        }
+        Update: {
+          categoria_id?: string
+          congregation_id?: string
+          created_at?: string | null
+          data_entrega?: string
+          descricao?: string
+          familia_id?: string
+          id?: string
+          observacoes?: string | null
+          quantidade?: number
+          responsavel_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mao_amiga_entregas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "mao_amiga_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mao_amiga_entregas_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mao_amiga_entregas_familia_id_fkey"
+            columns: ["familia_id"]
+            isOneToOne: false
+            referencedRelation: "mao_amiga_familias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mao_amiga_estoque: {
+        Row: {
+          categoria_id: string
+          congregation_id: string
+          descricao: string
+          id: string
+          quantidade: number
+          unidade: string
+          updated_at: string | null
+        }
+        Insert: {
+          categoria_id: string
+          congregation_id: string
+          descricao: string
+          id?: string
+          quantidade?: number
+          unidade: string
+          updated_at?: string | null
+        }
+        Update: {
+          categoria_id?: string
+          congregation_id?: string
+          descricao?: string
+          id?: string
+          quantidade?: number
+          unidade?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mao_amiga_estoque_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "mao_amiga_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mao_amiga_estoque_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mao_amiga_estoque_movimentos: {
+        Row: {
+          categoria_id: string
+          congregation_id: string
+          created_at: string | null
+          created_by: string | null
+          descricao: string
+          id: string
+          quantidade: number
+          referencia_id: string | null
+          tipo: string
+        }
+        Insert: {
+          categoria_id: string
+          congregation_id: string
+          created_at?: string | null
+          created_by?: string | null
+          descricao: string
+          id?: string
+          quantidade: number
+          referencia_id?: string | null
+          tipo: string
+        }
+        Update: {
+          categoria_id?: string
+          congregation_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string
+          id?: string
+          quantidade?: number
+          referencia_id?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mao_amiga_estoque_movimentos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "mao_amiga_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mao_amiga_estoque_movimentos_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mao_amiga_familias: {
+        Row: {
+          ativo: boolean | null
+          congregation_id: string
+          created_at: string | null
+          endereco: string | null
+          id: string
+          necessidade_principal: string | null
+          nome_responsavel: string
+          observacoes: string | null
+          qtd_pessoas: number | null
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          congregation_id: string
+          created_at?: string | null
+          endereco?: string | null
+          id?: string
+          necessidade_principal?: string | null
+          nome_responsavel: string
+          observacoes?: string | null
+          qtd_pessoas?: number | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          congregation_id?: string
+          created_at?: string | null
+          endereco?: string | null
+          id?: string
+          necessidade_principal?: string | null
+          nome_responsavel?: string
+          observacoes?: string | null
+          qtd_pessoas?: number | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mao_amiga_familias_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           active: boolean
