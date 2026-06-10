@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Church, Calendar, Megaphone, BookOpen,
-  MapPin, Building2, Settings, LogOut,
+  MapPin, Building2, Settings, LogOut, Users2
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
