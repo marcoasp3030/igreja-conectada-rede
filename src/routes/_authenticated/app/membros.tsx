@@ -36,6 +36,9 @@ function Membros() {
     address: "", address_number: "", neighborhood: "", city: "", state: "SP", zip_code: "",
   };
   const [form, setForm] = useState(empty);
+  const [selectedDeptIds, setSelectedDeptIds] = useState<string[]>([]);
+  type SkillForm = { name: string; description: string };
+  const [skills, setSkills] = useState<SkillForm[]>([]);
 
   const { data: congregations } = useQuery({
     queryKey: ["congregations-list"],
