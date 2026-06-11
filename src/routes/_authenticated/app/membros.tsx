@@ -9,7 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Phone, Cake, Building2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Phone, Cake, Building2, X, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -33,10 +36,18 @@ function Membros() {
     address: "", address_number: "", neighborhood: "", city: "", state: "SP", zip_code: "",
   };
   const [form, setForm] = useState(empty);
+  const [selectedDeptIds, setSelectedDeptIds] = useState<string[]>([]);
+  type SkillForm = { name: string; description: string };
+  const [skills, setSkills] = useState<SkillForm[]>([]);
 
   const { data: congregations } = useQuery({
     queryKey: ["congregations-list"],
     queryFn: async () => (await supabase.from("congregations").select("id, name").order("name")).data ?? [],
+  });
+
+  const { data: departamentos } = useQuery({
+    queryKey: ["departamentos-list"],
+    queryFn: async () => (await supabase.from("departamentos").select("id, nome, sigla").order("nome")).data ?? [],
   });
 
   const { data: members, isLoading } = useQuery({
@@ -63,7 +74,7 @@ function Membros() {
   const create = useMutation({
     mutationFn: async () => {
       if (!form.congregation_id) throw new Error("Selecione a congregação");
-      const { error } = await supabase.from("members").insert({
+      const { data: inserted, error } = await supabase.from("members").insert({
         full_name: form.full_name,
         phone: form.phone || null,
         email: form.email || null,
@@ -77,17 +88,48 @@ function Membros() {
         city: form.city || null,
         state: form.state || null,
         zip_code: form.zip_code || null,
-      });
+      }).select("id").single();
       if (error) throw error;
+      const memberId = inserted!.id;
+
+      if (selectedDeptIds.length) {
+        const { error: dErr } = await supabase.from("member_departments").insert(
+          selectedDeptIds.map((id) => ({ member_id: memberId, departamento_id: id }))
+        );
+        if (dErr) throw dErr;
+      }
+
+      const cleanSkills = skills
+        .map((s) => ({ name: s.name.trim(), description: s.description.trim() }))
+        .filter((s) => s.name.length > 0);
+      if (cleanSkills.length) {
+        const { error: sErr } = await supabase.from("member_skills").insert(
+          cleanSkills.map((s) => ({
+            member_id: memberId,
+            name: s.name.slice(0, 100),
+            description: s.description ? s.description.slice(0, 500) : null,
+          }))
+        );
+        if (sErr) throw sErr;
+      }
     },
     onSuccess: () => {
       toast.success("Membro cadastrado!");
       qc.invalidateQueries({ queryKey: ["members"] });
       setOpen(false);
       setForm(empty);
+      setSelectedDeptIds([]);
+      setSkills([]);
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const toggleDept = (id: string) =>
+    setSelectedDeptIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  const addSkill = () => setSkills((prev) => [...prev, { name: "", description: "" }]);
+  const updateSkill = (i: number, patch: Partial<SkillForm>) =>
+    setSkills((prev) => prev.map((s, idx) => idx === i ? { ...s, ...patch } : s));
+  const removeSkill = (i: number) => setSkills((prev) => prev.filter((_, idx) => idx !== i));
 
   return (
     <div>
@@ -140,6 +182,65 @@ function Membros() {
                   <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} /></div>
                 <div className="space-y-2 sm:col-span-2"><Label>CEP</Label>
                   <Input value={form.zip_code} onChange={(e) => setForm({ ...form, zip_code: e.target.value })} /></div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Departamentos (pode selecionar mais de um)</Label>
+                  <div className="rounded-md border p-3 max-h-44 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {(departamentos ?? []).length === 0 && (
+                      <p className="text-xs text-muted-foreground col-span-2">
+                        Nenhum departamento cadastrado. Crie em "Departamentos".
+                      </p>
+                    )}
+                    {departamentos?.map((d) => {
+                      const checked = selectedDeptIds.includes(d.id);
+                      return (
+                        <label key={d.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <Checkbox checked={checked} onCheckedChange={() => toggleDept(d.id)} />
+                          <span>{d.nome}{d.sigla ? ` (${d.sigla})` : ""}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" /> Habilidades / Profissões
+                    </Label>
+                    <Button type="button" size="sm" variant="outline" onClick={addSkill}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Ex.: Eletricista, Costureira, Médico. Outros membros poderão consultar e contratar serviços.
+                  </p>
+                  {skills.length === 0 && (
+                    <p className="text-xs text-muted-foreground italic">Nenhuma habilidade adicionada.</p>
+                  )}
+                  <div className="space-y-2">
+                    {skills.map((s, i) => (
+                      <div key={i} className="grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_2fr_auto]">
+                        <Input
+                          placeholder="Habilidade"
+                          maxLength={100}
+                          value={s.name}
+                          onChange={(e) => updateSkill(i, { name: e.target.value })}
+                        />
+                        <Textarea
+                          placeholder="Descrição / observações (opcional)"
+                          maxLength={500}
+                          rows={1}
+                          value={s.description}
+                          onChange={(e) => updateSkill(i, { description: e.target.value })}
+                        />
+                        <Button type="button" size="icon" variant="ghost" onClick={() => removeSkill(i)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
