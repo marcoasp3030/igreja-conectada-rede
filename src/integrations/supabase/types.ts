@@ -949,6 +949,77 @@ export type Database = {
           },
         ]
       }
+      member_departments: {
+        Row: {
+          created_at: string
+          departamento_id: string
+          member_id: string
+        }
+        Insert: {
+          created_at?: string
+          departamento_id: string
+          member_id: string
+        }
+        Update: {
+          created_at?: string
+          departamento_id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_departments_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_departments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_skills: {
+        Row: {
+          contact_visible: boolean
+          created_at: string
+          description: string | null
+          id: string
+          member_id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contact_visible?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          member_id: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contact_visible?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          member_id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_skills_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           active: boolean
