@@ -45,6 +45,11 @@ function Membros() {
     queryFn: async () => (await supabase.from("congregations").select("id, name").order("name")).data ?? [],
   });
 
+  const { data: departamentos } = useQuery({
+    queryKey: ["departamentos-list"],
+    queryFn: async () => (await supabase.from("departamentos").select("id, nome, sigla").order("nome")).data ?? [],
+  });
+
   const { data: members, isLoading } = useQuery({
     queryKey: ["members"],
     queryFn: async () => {
