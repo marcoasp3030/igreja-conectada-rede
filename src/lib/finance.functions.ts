@@ -380,6 +380,123 @@ export const recomputeClosing = createServerFn({ method: "POST" })
     return row;
   });
 
+async function canReview(supabase: any, userId: string, congregationId: string) {
+  if (await isSedeAdmin(supabase, userId)) return true;
+  const roles = await getRolesForCongregation(supabase, userId, congregationId);
+  return roles.some((r: string) => r === "admin_congregacao" || r === "secretario");
+}
+
+async function canSubmit(supabase: any, userId: string, congregationId: string) {
+  if (await isSedeAdmin(supabase, userId)) return true;
+  const roles = await getRolesForCongregation(supabase, userId, congregationId);
+  return roles.some((r: string) => r === "admin_congregacao" || r === "tesoureiro");
+}
+
+async function logClosingHistory(supabase: any, params: {
+  closing_id: string; congregation_id: string; action: string;
+  from_status?: string | null; to_status?: string | null;
+  actor_id: string; observacao?: string | null;
+}) {
+  await supabase.from("finance_closing_history").insert({
+    closing_id: params.closing_id,
+    congregation_id: params.congregation_id,
+    action: params.action,
+    from_status: params.from_status ?? null,
+    to_status: params.to_status ?? null,
+    actor_id: params.actor_id,
+    observacao: params.observacao ?? null,
+  });
+}
+
+export const submitClosing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; observacao?: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: cur, error: e1 } = await context.supabase
+      .from("finance_closings").select("*").eq("id", data.id).single();
+    if (e1) throw e1;
+    if (!(await canSubmit(context.supabase, context.userId, cur.congregation_id)))
+      throw new Error("Apenas Tesoureiro ou Admin pode enviar para revisão.");
+    if (!["aberto", "rejeitado"].includes(cur.status))
+      throw new Error("Apenas fechamentos abertos ou rejeitados podem ser enviados.");
+    const totals = await computeTotals(context.supabase, cur.congregation_id, cur.data_inicio, cur.data_fim);
+    const { data: row, error } = await context.supabase
+      .from("finance_closings")
+      .update({
+        status: "em_revisao",
+        submitted_by: context.userId,
+        submitted_at: new Date().toISOString(),
+        rejection_reason: null,
+        total_entradas: totals.entradas,
+        total_saidas: totals.saidas,
+        saldo: totals.entradas - totals.saidas,
+      })
+      .eq("id", data.id).select().single();
+    if (error) throw error;
+    if (data.observacao) {
+      await logClosingHistory(context.supabase, {
+        closing_id: row.id, congregation_id: row.congregation_id,
+        action: "submitted_note", actor_id: context.userId, observacao: data.observacao,
+      });
+    }
+    return row;
+  });
+
+export const approveClosing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; observacao?: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: cur, error: e1 } = await context.supabase
+      .from("finance_closings").select("*").eq("id", data.id).single();
+    if (e1) throw e1;
+    if (!(await canReview(context.supabase, context.userId, cur.congregation_id)))
+      throw new Error("Apenas Secretário ou Admin pode aprovar a revisão.");
+    if (cur.status !== "em_revisao")
+      throw new Error("O fechamento precisa estar em revisão para ser aprovado.");
+    const { data: row, error } = await context.supabase
+      .from("finance_closings")
+      .update({
+        status: "aprovado",
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+        rejection_reason: null,
+      })
+      .eq("id", data.id).select().single();
+    if (error) throw error;
+    if (data.observacao) {
+      await logClosingHistory(context.supabase, {
+        closing_id: row.id, congregation_id: row.congregation_id,
+        action: "approved_note", actor_id: context.userId, observacao: data.observacao,
+      });
+    }
+    return row;
+  });
+
+export const rejectClosing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; motivo: string }) => d)
+  .handler(async ({ data, context }) => {
+    if (!data.motivo?.trim()) throw new Error("Informe o motivo da rejeição.");
+    const { data: cur, error: e1 } = await context.supabase
+      .from("finance_closings").select("*").eq("id", data.id).single();
+    if (e1) throw e1;
+    if (!(await canReview(context.supabase, context.userId, cur.congregation_id)))
+      throw new Error("Apenas Secretário ou Admin pode rejeitar a revisão.");
+    if (!["em_revisao", "aprovado"].includes(cur.status))
+      throw new Error("Só é possível rejeitar fechamentos em revisão ou aprovados.");
+    const { data: row, error } = await context.supabase
+      .from("finance_closings")
+      .update({
+        status: "rejeitado",
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+        rejection_reason: data.motivo.trim(),
+      })
+      .eq("id", data.id).select().single();
+    if (error) throw error;
+    return row;
+  });
+
 export const closeClosing = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
@@ -388,14 +505,17 @@ export const closeClosing = createServerFn({ method: "POST" })
       .from("finance_closings").select("*").eq("id", data.id).single();
     if (e1) throw e1;
     if (cur.status === "fechado") return cur;
-    // Bloquear se houver lançamentos pendentes
+    if (cur.status !== "aprovado")
+      throw new Error("O fechamento precisa estar APROVADO pelo Secretário antes de ser travado.");
+    if (!(await canApprove(context.supabase, context.userId, cur.congregation_id)))
+      throw new Error("Apenas Admin da Congregação ou Sede pode travar o fechamento.");
     const { data: pend } = await context.supabase
       .from("finance_transactions")
-      .select("id", { count: "exact", head: true })
+      .select("id")
       .eq("congregation_id", cur.congregation_id)
       .eq("status", "pendente")
       .gte("data", cur.data_inicio).lte("data", cur.data_fim);
-    if ((pend as any)?.length) throw new Error("Existem lançamentos pendentes no período. Aprove ou rejeite antes de fechar.");
+    if ((pend ?? []).length) throw new Error("Existem lançamentos pendentes no período. Aprove ou rejeite antes de fechar.");
     const totals = await computeTotals(context.supabase, cur.congregation_id, cur.data_inicio, cur.data_fim);
     const { data: row, error } = await context.supabase
       .from("finance_closings")
@@ -420,7 +540,11 @@ export const reopenClosing = createServerFn({ method: "POST" })
     if (!sede) throw new Error("Apenas a sede pode reabrir fechamentos.");
     const { data: row, error } = await context.supabase
       .from("finance_closings")
-      .update({ status: "aberto", closed_by: null, closed_at: null })
+      .update({
+        status: "aberto", closed_by: null, closed_at: null,
+        submitted_by: null, submitted_at: null,
+        reviewed_by: null, reviewed_at: null, rejection_reason: null,
+      })
       .eq("id", data.id).select().single();
     if (error) throw error;
     return row;
@@ -433,6 +557,19 @@ export const deleteClosing = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("finance_closings").delete().eq("id", data.id);
     if (error) throw error;
     return { ok: true };
+  });
+
+export const getClosingHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { closing_id: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("finance_closing_history")
+      .select("*, profiles:actor_id(full_name,email)")
+      .eq("closing_id", data.closing_id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return rows ?? [];
   });
 
 export const listEventsLite = createServerFn({ method: "GET" })
