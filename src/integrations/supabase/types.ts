@@ -1724,6 +1724,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_finance_period_locked: {
+        Args: { _congregation_id: string; _data: string }
+        Returns: boolean
+      }
       is_sede_admin: { Args: { _user_id: string }; Returns: boolean }
       user_congregation: { Args: { _user_id: string }; Returns: string }
     }
