@@ -12,6 +12,7 @@ function FinanceLayout() {
     { value: "/app/financeiro", label: "Dashboard" },
     { value: "/app/financeiro/lancamentos", label: "Entradas" },
     { value: "/app/financeiro/despesas", label: "Despesas" },
+    { value: "/app/financeiro/fechamentos", label: "Fechamentos" },
     { value: "/app/financeiro/relatorios", label: "Relatórios" },
   ];
   const current = [...tabs].reverse().find((t) => path === t.value || path.startsWith(t.value + "/"))?.value ?? "/app/financeiro";

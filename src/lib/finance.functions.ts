@@ -296,3 +296,152 @@ export const listMembersLite = createServerFn({ method: "GET" })
       .from("members").select("id,full_name").eq("congregation_id", data.congregation_id).order("full_name");
     return rows ?? [];
   });
+
+// ============ Fechamentos ============
+const closingSchema = z.object({
+  congregation_id: z.string(),
+  periodo_tipo: z.enum(["culto", "semana", "mes"]),
+  event_id: z.string().nullable().optional(),
+  data_inicio: z.string(),
+  data_fim: z.string(),
+  observacoes: z.string().nullable().optional(),
+});
+
+async function computeTotals(supabase: any, congregation_id: string, di: string, df: string) {
+  const { data, error } = await supabase
+    .from("finance_transactions")
+    .select("tipo,valor")
+    .eq("congregation_id", congregation_id)
+    .eq("status", "aprovado")
+    .gte("data", di).lte("data", df);
+  if (error) throw error;
+  const entradas = (data ?? []).filter((r: any) => r.tipo === "entrada").reduce((s: number, r: any) => s + Number(r.valor), 0);
+  const saidas = (data ?? []).filter((r: any) => r.tipo === "saida").reduce((s: number, r: any) => s + Number(r.valor), 0);
+  return { entradas, saidas };
+}
+
+export const listClosings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { congregation_id?: string } | undefined) => d ?? {})
+  .handler(async ({ data, context }) => {
+    let q = context.supabase
+      .from("finance_closings")
+      .select("*, congregations(name), events(title)")
+      .order("data_inicio", { ascending: false });
+    if (data.congregation_id) q = q.eq("congregation_id", data.congregation_id);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const createClosing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => closingSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    // Verificar sobreposição com fechamentos já consolidados
+    const { data: overlap } = await context.supabase
+      .from("finance_closings")
+      .select("id,status,data_inicio,data_fim")
+      .eq("congregation_id", data.congregation_id)
+      .eq("status", "fechado")
+      .lte("data_inicio", data.data_fim)
+      .gte("data_fim", data.data_inicio);
+    if ((overlap ?? []).length > 0) {
+      throw new Error("Já existe um fechamento consolidado que cobre este período.");
+    }
+    const totals = await computeTotals(context.supabase, data.congregation_id, data.data_inicio, data.data_fim);
+    const payload = {
+      ...data,
+      total_entradas: totals.entradas,
+      total_saidas: totals.saidas,
+      saldo: totals.entradas - totals.saidas,
+      status: "aberto" as const,
+      created_by: context.userId,
+    };
+    const { data: row, error } = await context.supabase.from("finance_closings").insert(payload).select().single();
+    if (error) throw error;
+    return row;
+  });
+
+export const recomputeClosing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: cur, error: e1 } = await context.supabase
+      .from("finance_closings").select("*").eq("id", data.id).single();
+    if (e1) throw e1;
+    if (cur.status === "fechado") throw new Error("Fechamento já consolidado.");
+    const totals = await computeTotals(context.supabase, cur.congregation_id, cur.data_inicio, cur.data_fim);
+    const { data: row, error } = await context.supabase
+      .from("finance_closings")
+      .update({ total_entradas: totals.entradas, total_saidas: totals.saidas, saldo: totals.entradas - totals.saidas })
+      .eq("id", data.id).select().single();
+    if (error) throw error;
+    return row;
+  });
+
+export const closeClosing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: cur, error: e1 } = await context.supabase
+      .from("finance_closings").select("*").eq("id", data.id).single();
+    if (e1) throw e1;
+    if (cur.status === "fechado") return cur;
+    // Bloquear se houver lançamentos pendentes
+    const { data: pend } = await context.supabase
+      .from("finance_transactions")
+      .select("id", { count: "exact", head: true })
+      .eq("congregation_id", cur.congregation_id)
+      .eq("status", "pendente")
+      .gte("data", cur.data_inicio).lte("data", cur.data_fim);
+    if ((pend as any)?.length) throw new Error("Existem lançamentos pendentes no período. Aprove ou rejeite antes de fechar.");
+    const totals = await computeTotals(context.supabase, cur.congregation_id, cur.data_inicio, cur.data_fim);
+    const { data: row, error } = await context.supabase
+      .from("finance_closings")
+      .update({
+        status: "fechado",
+        closed_by: context.userId,
+        closed_at: new Date().toISOString(),
+        total_entradas: totals.entradas,
+        total_saidas: totals.saidas,
+        saldo: totals.entradas - totals.saidas,
+      })
+      .eq("id", data.id).select().single();
+    if (error) throw error;
+    return row;
+  });
+
+export const reopenClosing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data, context }) => {
+    const sede = await isSedeAdmin(context.supabase, context.userId);
+    if (!sede) throw new Error("Apenas a sede pode reabrir fechamentos.");
+    const { data: row, error } = await context.supabase
+      .from("finance_closings")
+      .update({ status: "aberto", closed_by: null, closed_at: null })
+      .eq("id", data.id).select().single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteClosing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("finance_closings").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+export const listEventsLite = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { congregation_id: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: rows } = await context.supabase
+      .from("events").select("id,title,starts_at")
+      .eq("congregation_id", data.congregation_id)
+      .order("starts_at", { ascending: false }).limit(100);
+    return rows ?? [];
+  });

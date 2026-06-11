@@ -30,6 +30,7 @@ import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAppFinanceiroIndexRouteImport } from './routes/_authenticated/app/financeiro.index'
 import { Route as AuthenticatedAppFinanceiroRelatoriosRouteImport } from './routes/_authenticated/app/financeiro.relatorios'
 import { Route as AuthenticatedAppFinanceiroLancamentosRouteImport } from './routes/_authenticated/app/financeiro.lancamentos'
+import { Route as AuthenticatedAppFinanceiroFechamentosRouteImport } from './routes/_authenticated/app/financeiro.fechamentos'
 import { Route as AuthenticatedAppFinanceiroDespesasRouteImport } from './routes/_authenticated/app/financeiro.despesas'
 
 const AuthRoute = AuthRouteImport.update({
@@ -147,6 +148,12 @@ const AuthenticatedAppFinanceiroLancamentosRoute =
     path: '/lancamentos',
     getParentRoute: () => AuthenticatedAppFinanceiroRoute,
   } as any)
+const AuthenticatedAppFinanceiroFechamentosRoute =
+  AuthenticatedAppFinanceiroFechamentosRouteImport.update({
+    id: '/fechamentos',
+    path: '/fechamentos',
+    getParentRoute: () => AuthenticatedAppFinanceiroRoute,
+  } as any)
 const AuthenticatedAppFinanceiroDespesasRoute =
   AuthenticatedAppFinanceiroDespesasRouteImport.update({
     id: '/despesas',
@@ -173,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/financeiro/despesas': typeof AuthenticatedAppFinanceiroDespesasRoute
+  '/app/financeiro/fechamentos': typeof AuthenticatedAppFinanceiroFechamentosRoute
   '/app/financeiro/lancamentos': typeof AuthenticatedAppFinanceiroLancamentosRoute
   '/app/financeiro/relatorios': typeof AuthenticatedAppFinanceiroRelatoriosRoute
   '/app/financeiro/': typeof AuthenticatedAppFinanceiroIndexRoute
@@ -195,6 +203,7 @@ export interface FileRoutesByTo {
   '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/financeiro/despesas': typeof AuthenticatedAppFinanceiroDespesasRoute
+  '/app/financeiro/fechamentos': typeof AuthenticatedAppFinanceiroFechamentosRoute
   '/app/financeiro/lancamentos': typeof AuthenticatedAppFinanceiroLancamentosRoute
   '/app/financeiro/relatorios': typeof AuthenticatedAppFinanceiroRelatoriosRoute
   '/app/financeiro': typeof AuthenticatedAppFinanceiroIndexRoute
@@ -220,6 +229,7 @@ export interface FileRoutesById {
   '/_authenticated/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/financeiro/despesas': typeof AuthenticatedAppFinanceiroDespesasRoute
+  '/_authenticated/app/financeiro/fechamentos': typeof AuthenticatedAppFinanceiroFechamentosRoute
   '/_authenticated/app/financeiro/lancamentos': typeof AuthenticatedAppFinanceiroLancamentosRoute
   '/_authenticated/app/financeiro/relatorios': typeof AuthenticatedAppFinanceiroRelatoriosRoute
   '/_authenticated/app/financeiro/': typeof AuthenticatedAppFinanceiroIndexRoute
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/app/usuarios'
     | '/app/'
     | '/app/financeiro/despesas'
+    | '/app/financeiro/fechamentos'
     | '/app/financeiro/lancamentos'
     | '/app/financeiro/relatorios'
     | '/app/financeiro/'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/app/usuarios'
     | '/app'
     | '/app/financeiro/despesas'
+    | '/app/financeiro/fechamentos'
     | '/app/financeiro/lancamentos'
     | '/app/financeiro/relatorios'
     | '/app/financeiro'
@@ -291,6 +303,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/usuarios'
     | '/_authenticated/app/'
     | '/_authenticated/app/financeiro/despesas'
+    | '/_authenticated/app/financeiro/fechamentos'
     | '/_authenticated/app/financeiro/lancamentos'
     | '/_authenticated/app/financeiro/relatorios'
     | '/_authenticated/app/financeiro/'
@@ -451,6 +464,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppFinanceiroLancamentosRouteImport
       parentRoute: typeof AuthenticatedAppFinanceiroRoute
     }
+    '/_authenticated/app/financeiro/fechamentos': {
+      id: '/_authenticated/app/financeiro/fechamentos'
+      path: '/fechamentos'
+      fullPath: '/app/financeiro/fechamentos'
+      preLoaderRoute: typeof AuthenticatedAppFinanceiroFechamentosRouteImport
+      parentRoute: typeof AuthenticatedAppFinanceiroRoute
+    }
     '/_authenticated/app/financeiro/despesas': {
       id: '/_authenticated/app/financeiro/despesas'
       path: '/despesas'
@@ -463,6 +483,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAppFinanceiroRouteChildren {
   AuthenticatedAppFinanceiroDespesasRoute: typeof AuthenticatedAppFinanceiroDespesasRoute
+  AuthenticatedAppFinanceiroFechamentosRoute: typeof AuthenticatedAppFinanceiroFechamentosRoute
   AuthenticatedAppFinanceiroLancamentosRoute: typeof AuthenticatedAppFinanceiroLancamentosRoute
   AuthenticatedAppFinanceiroRelatoriosRoute: typeof AuthenticatedAppFinanceiroRelatoriosRoute
   AuthenticatedAppFinanceiroIndexRoute: typeof AuthenticatedAppFinanceiroIndexRoute
@@ -472,6 +493,8 @@ const AuthenticatedAppFinanceiroRouteChildren: AuthenticatedAppFinanceiroRouteCh
   {
     AuthenticatedAppFinanceiroDespesasRoute:
       AuthenticatedAppFinanceiroDespesasRoute,
+    AuthenticatedAppFinanceiroFechamentosRoute:
+      AuthenticatedAppFinanceiroFechamentosRoute,
     AuthenticatedAppFinanceiroLancamentosRoute:
       AuthenticatedAppFinanceiroLancamentosRoute,
     AuthenticatedAppFinanceiroRelatoriosRoute:
