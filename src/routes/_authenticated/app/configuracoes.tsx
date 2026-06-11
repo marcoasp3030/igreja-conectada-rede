@@ -1,12 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, type AppRole } from "@/hooks/use-profile";
+import {
+  getOpenAIKeyStatus,
+  saveOpenAIKey,
+  deleteOpenAIKey,
+} from "@/lib/system-settings.functions";
 import {
   Shield,
   Mail,
@@ -19,6 +30,12 @@ import {
   Info,
   Fingerprint,
   Sparkles,
+  Bot,
+  Eye,
+  EyeOff,
+  Loader2,
+  Trash2,
+  CheckCircle2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
@@ -323,6 +340,141 @@ function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      {data?.isSedeAdmin && <OpenAIKeyCard />}
     </div>
+  );
+}
+
+function OpenAIKeyCard() {
+  const queryClient = useQueryClient();
+  const fetchStatus = useServerFn(getOpenAIKeyStatus);
+  const saveFn = useServerFn(saveOpenAIKey);
+  const deleteFn = useServerFn(deleteOpenAIKey);
+
+  const [apiKey, setApiKey] = useState("");
+  const [show, setShow] = useState(false);
+
+  const { data: status, isLoading } = useQuery({
+    queryKey: ["openai-key-status"],
+    queryFn: () => fetchStatus(),
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: (key: string) => saveFn({ data: { apiKey: key } }),
+    onSuccess: () => {
+      toast.success("Chave da OpenAI salva com sucesso.");
+      setApiKey("");
+      setShow(false);
+      queryClient.invalidateQueries({ queryKey: ["openai-key-status"] });
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao salvar chave."),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteFn(),
+    onSuccess: () => {
+      toast.success("Chave da OpenAI removida.");
+      queryClient.invalidateQueries({ queryKey: ["openai-key-status"] });
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao remover chave."),
+  });
+
+  return (
+    <Card className="shadow-card">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Bot className="h-5 w-5 text-primary" />
+          Integração com OpenAI
+        </CardTitle>
+        <CardDescription>
+          Configure a chave da API da OpenAI para habilitar recursos de inteligência artificial no
+          sistema. A chave é armazenada de forma segura e visível apenas para administradores da sede.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Carregando status...
+          </div>
+        ) : status?.configured ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Chave configurada</p>
+                <p className="font-mono text-xs text-muted-foreground">{status.masked}</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-1.5 h-4 w-4" />
+              )}
+              Remover
+            </Button>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-border/40 bg-muted/20 p-4 text-sm text-muted-foreground">
+            Nenhuma chave configurada. Adicione uma chave abaixo para ativar os recursos de IA.
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label htmlFor="openai-key">
+            {status?.configured ? "Substituir chave" : "Nova chave da API"}
+          </Label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="openai-key"
+                type={show ? "text" : "password"}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="sk-..."
+                className="pl-9 pr-10 font-mono text-sm"
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                onClick={() => setShow((s) => !s)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+                aria-label={show ? "Ocultar" : "Mostrar"}
+              >
+                {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <Button
+              onClick={() => saveMutation.mutate(apiKey)}
+              disabled={saveMutation.isPending || apiKey.trim().length < 20}
+            >
+              {saveMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+              Salvar
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Obtenha sua chave em{" "}
+            <a
+              href="https://platform.openai.com/api-keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline-offset-2 hover:underline"
+            >
+              platform.openai.com/api-keys
+            </a>
+            . Deve iniciar com <code className="font-mono">sk-</code>.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
