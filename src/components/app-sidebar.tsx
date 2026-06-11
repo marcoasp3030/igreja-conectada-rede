@@ -3,12 +3,12 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Church, Calendar, CalendarDays, Megaphone, BookOpen,
   MapPin, Building2, Settings, LogOut, Users2, UserCog, ScrollText, HeartHandshake, Wallet,
-  ChevronRight, ChevronDown
+  ChevronRight, Sparkles,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
-  SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -21,6 +21,7 @@ interface MenuItem {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
 }
 
 interface MenuGroup {
@@ -87,24 +88,51 @@ function useOpenGroups() {
   return { openGroups, setOpenGroups };
 }
 
-function MenuItemLink({ item, active }: { item: MenuItem; active: boolean }) {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+function isItemActive(path: string, url: string) {
+  return path === url || (url !== "/app" && path.startsWith(url));
+}
 
-  const link = (
-    <SidebarMenuButton asChild isActive={active} tooltip={collapsed ? item.title : undefined}>
-      <Link to={item.url} className="flex items-center gap-2">
-        <item.icon className="h-4 w-4 shrink-0" />
-        <span className="truncate">{item.title}</span>
+function ItemRow({ item, active, collapsed }: { item: MenuItem; active: boolean; collapsed: boolean }) {
+  const content = (
+    <SidebarMenuButton
+      asChild
+      isActive={active}
+      tooltip={collapsed ? item.title : undefined}
+      className={cn(
+        "group/item relative h-9 overflow-hidden rounded-lg transition-all duration-200",
+        "hover:bg-sidebar-accent/70 hover:translate-x-0.5",
+        active && [
+          "bg-gradient-to-r from-sidebar-accent to-sidebar-accent/40",
+          "text-sidebar-foreground shadow-sm",
+        ],
+      )}
+    >
+      <Link to={item.url} className="flex items-center gap-3">
+        {active && (
+          <span
+            aria-hidden
+            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gold shadow-[0_0_8px_var(--color-gold)]"
+          />
+        )}
+        <item.icon
+          className={cn(
+            "h-[18px] w-[18px] shrink-0 transition-all duration-200",
+            active ? "text-gold" : "text-sidebar-foreground/70 group-hover/item:text-sidebar-foreground",
+          )}
+        />
+        <span
+          className={cn(
+            "truncate text-sm transition-all",
+            active ? "font-medium text-sidebar-foreground" : "text-sidebar-foreground/85",
+          )}
+        >
+          {item.title}
+        </span>
       </Link>
     </SidebarMenuButton>
   );
 
-  return (
-    <SidebarMenuItem>
-      {link}
-    </SidebarMenuItem>
-  );
+  return <SidebarMenuItem>{content}</SidebarMenuItem>;
 }
 
 function GroupSection({ group, open, onOpenChange, collapsed }: {
@@ -114,30 +142,41 @@ function GroupSection({ group, open, onOpenChange, collapsed }: {
   collapsed: boolean;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const hasActive = group.items.some(
-    (item) => path === item.url || (item.url !== "/app" && path.startsWith(item.url))
-  );
+  const hasActive = group.items.some((item) => isItemActive(path, item.url));
 
   if (collapsed) {
     return (
-      <SidebarGroup>
+      <SidebarGroup className="py-1">
         <SidebarGroupContent>
-          <SidebarMenu>
+          <SidebarMenu className="gap-1">
             {group.items.map((item) => {
-              const active = path === item.url || (item.url !== "/app" && path.startsWith(item.url));
+              const active = isItemActive(path, item.url);
               return (
                 <SidebarMenuItem key={item.url}>
-                  <Tooltip delayDuration={100}>
+                  <Tooltip delayDuration={80}>
                     <TooltipTrigger asChild>
-                      <SidebarMenuButton asChild isActive={active}>
-                        <Link to={item.url} className="flex items-center gap-2">
-                          <item.icon className="h-4 w-4 shrink-0" />
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        className={cn(
+                          "relative h-9 w-9 rounded-lg transition-all duration-200",
+                          "hover:bg-sidebar-accent hover:scale-105",
+                          active && "bg-sidebar-accent shadow-[inset_0_0_0_1px_var(--color-gold)]",
+                        )}
+                      >
+                        <Link to={item.url} className="flex items-center justify-center">
+                          <item.icon
+                            className={cn(
+                              "h-[18px] w-[18px] transition-colors",
+                              active ? "text-gold" : "text-sidebar-foreground/75",
+                            )}
+                          />
                         </Link>
                       </SidebarMenuButton>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="flex items-center gap-3">
+                    <TooltipContent side="right" sideOffset={10} className="flex items-center gap-2 font-medium">
                       {item.title}
-                      {active && <span className="h-1.5 w-1.5 rounded-full bg-gold" />}
+                      {active && <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />}
                     </TooltipContent>
                   </Tooltip>
                 </SidebarMenuItem>
@@ -151,12 +190,12 @@ function GroupSection({ group, open, onOpenChange, collapsed }: {
 
   if (group.items.length === 1) {
     const item = group.items[0];
-    const active = path === item.url || (item.url !== "/app" && path.startsWith(item.url));
+    const active = isItemActive(path, item.url);
     return (
-      <SidebarGroup>
+      <SidebarGroup className="py-1">
         <SidebarGroupContent>
-          <SidebarMenu>
-            <MenuItemLink item={item} active={active} />
+          <SidebarMenu className="gap-1">
+            <ItemRow item={item} active={active} collapsed={false} />
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -164,22 +203,33 @@ function GroupSection({ group, open, onOpenChange, collapsed }: {
   }
 
   return (
-    <Collapsible open={open || hasActive} onOpenChange={onOpenChange} className="group/collapsible">
-      <SidebarGroup>
+    <Collapsible
+      open={open || hasActive}
+      onOpenChange={onOpenChange}
+      className="group/collapsible"
+    >
+      <SidebarGroup className="py-1">
         <SidebarGroupLabel asChild>
-          <CollapsibleTrigger className="flex w-full items-center justify-between pr-2 text-[11px] uppercase tracking-wider text-sidebar-foreground/60 hover:text-sidebar-foreground/90">
-            <span>{group.label}</span>
-            <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+          <CollapsibleTrigger
+            className={cn(
+              "group/trigger flex w-full items-center justify-between rounded-md px-2 py-1.5",
+              "text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/55",
+              "transition-colors hover:text-sidebar-foreground/90",
+            )}
+          >
+            <span className="flex items-center gap-1.5">
+              {group.label}
+              {hasActive && <span className="h-1 w-1 rounded-full bg-gold" />}
+            </span>
+            <ChevronRight className="h-3 w-3 transition-transform duration-300 group-data-[state=open]/collapsible:rotate-90" />
           </CollapsibleTrigger>
         </SidebarGroupLabel>
-        <CollapsibleContent>
-          <SidebarGroupContent>
-            <SidebarMenu>
+        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+          <SidebarGroupContent className="pt-1">
+            <SidebarMenu className="gap-1">
               {group.items.map((item) => {
-                const active = path === item.url || (item.url !== "/app" && path.startsWith(item.url));
-                return (
-                  <MenuItemLink key={item.url} item={item} active={active} />
-                );
+                const active = isItemActive(path, item.url);
+                return <ItemRow key={item.url} item={item} active={active} collapsed={false} />;
               })}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -202,16 +252,40 @@ export function AppSidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <Sidebar collapsible="icon" className="transition-[width] duration-300 ease-in-out">
-        <SidebarHeader className="border-b border-sidebar-border/60">
+      <Sidebar
+        collapsible="icon"
+        className={cn(
+          "transition-[width] duration-300 ease-in-out",
+          "[&_[data-sidebar=sidebar]]:bg-gradient-to-b",
+          "[&_[data-sidebar=sidebar]]:from-sidebar",
+          "[&_[data-sidebar=sidebar]]:to-[color-mix(in_oklab,var(--color-sidebar)_88%,black)]",
+        )}
+      >
+        {/* Decorative glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,var(--color-gold)_0%,transparent_70%)] opacity-[0.07]"
+        />
+
+        <SidebarHeader className="relative border-b border-sidebar-border/40">
           <div className="flex items-center gap-3 px-2 py-3">
-            <div className="rounded-lg bg-white/10 p-1.5 transition-transform duration-300 hover:scale-105">
+            <div
+              className={cn(
+                "relative rounded-xl p-1.5 transition-all duration-300",
+                "bg-gradient-to-br from-white/15 to-white/5",
+                "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]",
+                "hover:scale-105 hover:shadow-[0_0_20px_-4px_var(--color-gold)]",
+              )}
+            >
               <BrandLogo className="h-9 w-9" />
+              <Sparkles className="absolute -right-1 -top-1 h-3 w-3 text-gold opacity-80" />
             </div>
             {!collapsed && (
-              <div className="flex flex-col leading-tight animate-fade-in">
-                <span className="text-sm font-semibold text-sidebar-foreground">AD Setor 70</span>
-                <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/70">
+              <div className="flex min-w-0 flex-col leading-tight animate-fade-in">
+                <span className="truncate text-sm font-semibold tracking-tight text-sidebar-foreground">
+                  AD Setor 70
+                </span>
+                <span className="truncate text-[10px] uppercase tracking-[0.14em] text-gold/80">
                   Ministério do Belém
                 </span>
               </div>
@@ -219,7 +293,7 @@ export function AppSidebar() {
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="overflow-y-auto">
+        <SidebarContent className="relative overflow-y-auto px-1 py-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sidebar-border/50">
           {groups.map((group) => (
             <GroupSection
               key={group.label}
@@ -231,40 +305,49 @@ export function AppSidebar() {
           ))}
         </SidebarContent>
 
-        <SidebarFooter className="border-t border-sidebar-border/60">
+        <SidebarFooter className="relative border-t border-sidebar-border/40 p-2">
           {collapsed ? (
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               <SidebarMenuItem>
-                <Tooltip delayDuration={100}>
+                <Tooltip delayDuration={80}>
                   <TooltipTrigger asChild>
-                    <SidebarMenuButton asChild>
-                      <Link to="/app/configuracoes" className="flex items-center gap-2">
-                        <Settings className="h-4 w-4 shrink-0" />
+                    <SidebarMenuButton
+                      asChild
+                      className="h-9 w-9 rounded-lg transition-all hover:bg-sidebar-accent hover:scale-105"
+                    >
+                      <Link to="/app/configuracoes" className="flex items-center justify-center">
+                        <Settings className="h-[18px] w-[18px] text-sidebar-foreground/75" />
                       </Link>
                     </SidebarMenuButton>
                   </TooltipTrigger>
-                  <TooltipContent side="right">Configurações</TooltipContent>
+                  <TooltipContent side="right" sideOffset={10}>Configurações</TooltipContent>
                 </Tooltip>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Tooltip delayDuration={100}>
+                <Tooltip delayDuration={80}>
                   <TooltipTrigger asChild>
-                    <SidebarMenuButton onClick={handleLogout}>
-                      <LogOut className="h-4 w-4 shrink-0" />
+                    <SidebarMenuButton
+                      onClick={handleLogout}
+                      className="h-9 w-9 rounded-lg transition-all hover:bg-destructive/20 hover:scale-105"
+                    >
+                      <LogOut className="h-[18px] w-[18px] text-sidebar-foreground/75" />
                     </SidebarMenuButton>
                   </TooltipTrigger>
-                  <TooltipContent side="right">Sair</TooltipContent>
+                  <TooltipContent side="right" sideOffset={10}>Sair</TooltipContent>
                 </Tooltip>
               </SidebarMenuItem>
             </SidebarMenu>
           ) : (
-            <>
-              <SidebarMenu>
+            <div className="flex flex-col gap-1">
+              <SidebarMenu className="gap-1">
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link to="/app/configuracoes" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4 shrink-0" />
-                      <span>Configurações</span>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-9 rounded-lg transition-all hover:bg-sidebar-accent hover:translate-x-0.5"
+                  >
+                    <Link to="/app/configuracoes" className="flex items-center gap-3">
+                      <Settings className="h-[18px] w-[18px] text-sidebar-foreground/75" />
+                      <span className="text-sm text-sidebar-foreground/85">Configurações</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -273,11 +356,16 @@ export function AppSidebar() {
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="mt-1 w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                className={cn(
+                  "h-9 w-full justify-start rounded-lg px-2 text-sm",
+                  "text-sidebar-foreground/80 transition-all",
+                  "hover:bg-destructive/15 hover:text-destructive-foreground hover:translate-x-0.5",
+                )}
               >
-                <LogOut className="mr-2 h-4 w-4 shrink-0" /> Sair
+                <LogOut className="mr-3 h-[18px] w-[18px] shrink-0" />
+                Sair
               </Button>
-            </>
+            </div>
           )}
         </SidebarFooter>
       </Sidebar>
