@@ -21,7 +21,7 @@ async function getUserCongregation(supabase: any, userId: string) {
 async function canApprove(supabase: any, userId: string, congregationId: string) {
   if (await isSedeAdmin(supabase, userId)) return true;
   const roles = await getRolesForCongregation(supabase, userId, congregationId);
-  return roles.some((r) => r === "admin_congregacao" || r === "tesoureiro");
+  return roles.some((r: string) => r === "admin_congregacao" || r === "tesoureiro");
 }
 
 // ============ Categorias ============
@@ -103,7 +103,7 @@ export const listTransactions = createServerFn({ method: "GET" })
     if (data.tipo) q = q.eq("tipo", data.tipo);
     if (data.category_id) q = q.eq("category_id", data.category_id);
     if (data.status) q = q.eq("status", data.status);
-    if (data.forma_pagamento) q = q.eq("forma_pagamento", data.forma_pagamento);
+    if (data.forma_pagamento) q = q.eq("forma_pagamento", data.forma_pagamento as any);
     if (data.limit) q = q.limit(data.limit);
     const { data: rows, error } = await q;
     if (error) throw error;
