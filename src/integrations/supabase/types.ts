@@ -1463,6 +1463,8 @@ export type Database = {
         | "admin_congregacao"
         | "lider_departamento"
         | "membro"
+        | "tesoureiro"
+        | "secretario"
       department_type:
         | "UMADB"
         | "UFADEB"
@@ -1613,6 +1615,8 @@ export const Constants = {
         "admin_congregacao",
         "lider_departamento",
         "membro",
+        "tesoureiro",
+        "secretario",
       ],
       department_type: [
         "UMADB",
