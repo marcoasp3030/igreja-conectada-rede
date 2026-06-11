@@ -151,13 +151,23 @@
   h1, h2, h3, h4 { letter-spacing: -0.01em; }
 }
 
-@layer utilities {
-  .bg-gradient-hero { background-image: var(--gradient-hero); }
-  .bg-gradient-gold { background-image: var(--gradient-gold); }
-  .shadow-soft { box-shadow: var(--shadow-soft); }
-  .shadow-card { box-shadow: var(--shadow-card); }
-  .text-gold { color: var(--color-gold); }
-  .animate-fade-in { animation: fade-in 0.3s ease-out; }
+@utility bg-gradient-hero {
+  background-image: var(--gradient-hero);
+}
+@utility bg-gradient-gold {
+  background-image: var(--gradient-gold);
+}
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+@utility text-gold {
+  color: var(--color-gold);
+}
+@utility animate-fade-in {
+  animation: fade-in 0.3s ease-out;
 }
 
 @keyframes fade-in {
