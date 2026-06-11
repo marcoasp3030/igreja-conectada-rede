@@ -62,6 +62,7 @@ function Usuarios() {
   const updateUser = useServerFn(fns.updateUser);
   const resetPwd = useServerFn(fns.resetUserPassword);
   const removeUser = useServerFn(fns.deleteUser);
+  const setActive = useServerFn(fns.setUserActive);
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
