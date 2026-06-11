@@ -74,7 +74,7 @@ function Membros() {
   const create = useMutation({
     mutationFn: async () => {
       if (!form.congregation_id) throw new Error("Selecione a congregação");
-      const { error } = await supabase.from("members").insert({
+      const { data: inserted, error } = await supabase.from("members").insert({
         full_name: form.full_name,
         phone: form.phone || null,
         email: form.email || null,
@@ -88,17 +88,48 @@ function Membros() {
         city: form.city || null,
         state: form.state || null,
         zip_code: form.zip_code || null,
-      });
+      }).select("id").single();
       if (error) throw error;
+      const memberId = inserted!.id;
+
+      if (selectedDeptIds.length) {
+        const { error: dErr } = await supabase.from("member_departments").insert(
+          selectedDeptIds.map((id) => ({ member_id: memberId, departamento_id: id }))
+        );
+        if (dErr) throw dErr;
+      }
+
+      const cleanSkills = skills
+        .map((s) => ({ name: s.name.trim(), description: s.description.trim() }))
+        .filter((s) => s.name.length > 0);
+      if (cleanSkills.length) {
+        const { error: sErr } = await supabase.from("member_skills").insert(
+          cleanSkills.map((s) => ({
+            member_id: memberId,
+            name: s.name.slice(0, 100),
+            description: s.description ? s.description.slice(0, 500) : null,
+          }))
+        );
+        if (sErr) throw sErr;
+      }
     },
     onSuccess: () => {
       toast.success("Membro cadastrado!");
       qc.invalidateQueries({ queryKey: ["members"] });
       setOpen(false);
       setForm(empty);
+      setSelectedDeptIds([]);
+      setSkills([]);
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const toggleDept = (id: string) =>
+    setSelectedDeptIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  const addSkill = () => setSkills((prev) => [...prev, { name: "", description: "" }]);
+  const updateSkill = (i: number, patch: Partial<SkillForm>) =>
+    setSkills((prev) => prev.map((s, idx) => idx === i ? { ...s, ...patch } : s));
+  const removeSkill = (i: number) => setSkills((prev) => prev.filter((_, idx) => idx !== i));
 
   return (
     <div>
