@@ -78,7 +78,7 @@ export const listUsers = createServerFn({ method: "GET" })
 
     let q = context.supabase
       .from("profiles")
-      .select("id, full_name, email, phone, congregation_id, created_at, congregations(name)")
+      .select("id, full_name, email, phone, congregation_id, active, created_at, congregations(name)")
       .order("created_at", { ascending: false });
     if (!sede) {
       if (!myCong) return [];
@@ -288,6 +288,46 @@ export const deleteUser = createServerFn({ method: "POST" })
         email: { from: target.email, to: null },
         roles: { from: target.roles, to: [] },
       },
+    });
+    return { ok: true };
+  });
+
+export const setUserActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({
+    user_id: z.string().uuid(),
+    active: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    if (data.user_id === context.userId) throw new Error("Você não pode inativar seu próprio usuário.");
+    const sede = await isSedeAdmin(context.supabase, context.userId);
+    const myCong = await getUserCongregation(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const target = await getUserSummary(supabaseAdmin, data.user_id);
+    if (!sede) {
+      if (!myCong || target.congregation_id !== myCong) throw new Error("Sem permissão.");
+    }
+
+    const { error: pErr } = await supabaseAdmin
+      .from("profiles")
+      .update({ active: data.active })
+      .eq("id", data.user_id);
+    if (pErr) throw new Error(pErr.message);
+
+    // Bloqueia/desbloqueia login via auth
+    const { error: aErr } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      ban_duration: data.active ? "none" : "876000h",
+    } as any);
+    if (aErr) throw new Error(aErr.message);
+
+    await writeAudit(supabaseAdmin, {
+      action: "update",
+      actorUserId: context.userId,
+      targetUserId: data.user_id,
+      targetEmail: target.email,
+      targetName: target.full_name,
+      congregationId: target.congregation_id,
+      changes: { active: { from: !data.active, to: data.active } },
     });
     return { ok: true };
   });
