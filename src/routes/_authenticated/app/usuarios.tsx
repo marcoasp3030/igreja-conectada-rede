@@ -195,12 +195,15 @@ function Usuarios() {
                   <TableHead>E-mail</TableHead>
                   <TableHead>Congregação</TableHead>
                   <TableHead>Perfil</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((u: any) => (
-                  <TableRow key={u.id}>
+                {filtered.map((u: any) => {
+                  const isActive = u.active !== false;
+                  return (
+                  <TableRow key={u.id} className={isActive ? "" : "opacity-60"}>
                     <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{u.email}</TableCell>
                     <TableCell>{u.congregations?.name ?? "—"}</TableCell>
@@ -211,16 +214,35 @@ function Usuarios() {
                         ))}
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <Badge variant={isActive ? "default" : "outline"}>
+                        {isActive ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right space-x-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(u)}>
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(u)} title="Editar">
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setPwdDialog({ id: u.id, name: u.full_name })}>
+                      <Button size="icon" variant="ghost" onClick={() => setPwdDialog({ id: u.id, name: u.full_name })} title="Redefinir senha">
                         <KeyRound className="h-4 w-4" />
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
+                        title={isActive ? "Inativar acesso" : "Liberar acesso"}
+                        onClick={() => {
+                          const msg = isActive
+                            ? `Inativar ${u.full_name}? O usuário não poderá mais acessar.`
+                            : `Liberar acesso de ${u.full_name}?`;
+                          if (confirm(msg)) toggleActive.mutate({ id: u.id, active: !isActive });
+                        }}
+                      >
+                        {isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4 text-emerald-600" />}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        title="Excluir"
                         onClick={() => {
                           if (confirm(`Excluir ${u.full_name}? Esta ação não pode ser desfeita.`)) del.mutate(u.id);
                         }}
@@ -229,10 +251,11 @@ function Usuarios() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       Nenhum usuário encontrado.
                     </TableCell>
                   </TableRow>
