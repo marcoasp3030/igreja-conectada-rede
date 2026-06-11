@@ -78,7 +78,7 @@ export const listUsers = createServerFn({ method: "GET" })
 
     let q = context.supabase
       .from("profiles")
-      .select("id, full_name, email, phone, congregation_id, created_at, congregations(name)")
+      .select("id, full_name, email, phone, congregation_id, active, created_at, congregations(name)")
       .order("created_at", { ascending: false });
     if (!sede) {
       if (!myCong) return [];
