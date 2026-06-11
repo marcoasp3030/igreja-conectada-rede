@@ -1,12 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, type AppRole } from "@/hooks/use-profile";
+import {
+  getOpenAIKeyStatus,
+  saveOpenAIKey,
+  deleteOpenAIKey,
+} from "@/lib/system-settings.functions";
 import {
   Shield,
   Mail,
@@ -19,6 +30,12 @@ import {
   Info,
   Fingerprint,
   Sparkles,
+  Bot,
+  Eye,
+  EyeOff,
+  Loader2,
+  Trash2,
+  CheckCircle2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
