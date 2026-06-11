@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { useProfile } from "@/hooks/use-profile";
+import { useProfile, type AppRole } from "@/hooks/use-profile";
 import {
   Shield,
   Mail,
@@ -15,12 +15,9 @@ import {
   Crown,
   Users,
   UserCheck,
-  UserX,
-  Lock,
-  Info,
-  ChevronRight,
-  Fingerprint,
   KeyRound,
+  Info,
+  Fingerprint,
   Sparkles,
 } from "lucide-react";
 
@@ -29,13 +26,15 @@ export const Route = createFileRoute("/_authenticated/app/configuracoes")({
 });
 
 const ROLE_META: Record<
-  string,
+  AppRole,
   { label: string; icon: React.ElementType; variant: "default" | "gold" | "secondary" | "outline" }
 > = {
   admin_sede: { label: "Admin Sede", icon: Crown, variant: "gold" },
   admin_congregacao: { label: "Admin Congregação", icon: Shield, variant: "default" },
   lider_departamento: { label: "Líder de Departamento", icon: Users, variant: "secondary" },
   membro: { label: "Membro", icon: User, variant: "outline" },
+  tesoureiro: { label: "Tesoureiro", icon: KeyRound, variant: "secondary" },
+  secretario: { label: "Secretário", icon: Shield, variant: "default" },
 };
 
 function RoleBadge({ role }: { role: string }) {
