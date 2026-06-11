@@ -565,11 +565,18 @@ export const getClosingHistory = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("finance_closing_history")
-      .select("*, profiles:actor_id(full_name,email)")
+      .select("*")
       .eq("closing_id", data.closing_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return rows ?? [];
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.actor_id).filter(Boolean)));
+    let profilesMap: Record<string, any> = {};
+    if (ids.length) {
+      const { data: profs } = await context.supabase
+        .from("profiles").select("id,full_name,email").in("id", ids);
+      profilesMap = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p]));
+    }
+    return (rows ?? []).map((r: any) => ({ ...r, actor: profilesMap[r.actor_id] ?? null }));
   });
 
 export const listEventsLite = createServerFn({ method: "GET" })
