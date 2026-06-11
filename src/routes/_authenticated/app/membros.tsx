@@ -182,6 +182,65 @@ function Membros() {
                   <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} /></div>
                 <div className="space-y-2 sm:col-span-2"><Label>CEP</Label>
                   <Input value={form.zip_code} onChange={(e) => setForm({ ...form, zip_code: e.target.value })} /></div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Departamentos (pode selecionar mais de um)</Label>
+                  <div className="rounded-md border p-3 max-h-44 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {(departamentos ?? []).length === 0 && (
+                      <p className="text-xs text-muted-foreground col-span-2">
+                        Nenhum departamento cadastrado. Crie em "Departamentos".
+                      </p>
+                    )}
+                    {departamentos?.map((d) => {
+                      const checked = selectedDeptIds.includes(d.id);
+                      return (
+                        <label key={d.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <Checkbox checked={checked} onCheckedChange={() => toggleDept(d.id)} />
+                          <span>{d.nome}{d.sigla ? ` (${d.sigla})` : ""}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" /> Habilidades / Profissões
+                    </Label>
+                    <Button type="button" size="sm" variant="outline" onClick={addSkill}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Ex.: Eletricista, Costureira, Médico. Outros membros poderão consultar e contratar serviços.
+                  </p>
+                  {skills.length === 0 && (
+                    <p className="text-xs text-muted-foreground italic">Nenhuma habilidade adicionada.</p>
+                  )}
+                  <div className="space-y-2">
+                    {skills.map((s, i) => (
+                      <div key={i} className="grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_2fr_auto]">
+                        <Input
+                          placeholder="Habilidade"
+                          maxLength={100}
+                          value={s.name}
+                          onChange={(e) => updateSkill(i, { name: e.target.value })}
+                        />
+                        <Textarea
+                          placeholder="Descrição / observações (opcional)"
+                          maxLength={500}
+                          rows={1}
+                          value={s.description}
+                          onChange={(e) => updateSkill(i, { description: e.target.value })}
+                        />
+                        <Button type="button" size="icon" variant="ghost" onClick={() => removeSkill(i)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
