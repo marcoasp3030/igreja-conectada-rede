@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Church, Calendar, CalendarDays, Megaphone, BookOpen,
   MapPin, Building2, Settings, LogOut, Users2, UserCog, ScrollText, HeartHandshake, Wallet,
-  ChevronRight, Sparkles,
+  ChevronRight, Sparkles, Search, X,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -13,6 +13,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { BrandLogo } from "@/components/brand-logo";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -245,6 +246,37 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { openGroups, setOpenGroups } = useOpenGroups();
 
+  const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const filteredGroups = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return groups;
+    return groups
+      .map((g) => ({
+        ...g,
+        items: g.items.filter((i) => i.title.toLowerCase().includes(term)),
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [search]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "/" && !collapsed) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+      if (e.key === "Escape" && search) {
+        setSearch("");
+        searchRef.current?.blur();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [search, collapsed]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
@@ -294,11 +326,49 @@ export function AppSidebar() {
         </SidebarHeader>
 
         <SidebarContent className="relative overflow-y-auto px-1 py-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sidebar-border/50">
-          {groups.map((group) => (
+          {!collapsed && (
+            <div className="px-2 pb-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-sidebar-foreground/50" />
+                <Input
+                  ref={searchRef}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar…"
+                  className={cn(
+                    "h-8 rounded-lg border-sidebar-border/50 bg-sidebar-accent/40 pl-8 pr-7",
+                    "text-sm text-sidebar-foreground placeholder:text-sidebar-foreground/40",
+                    "focus-visible:ring-1 focus-visible:ring-gold/50",
+                    "transition-all duration-200",
+                  )}
+                />
+                {search ? (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden rounded border border-sidebar-border/50 bg-sidebar-accent/60 px-1 py-0.5 text-[10px] font-mono text-sidebar-foreground/40 lg:inline-block">
+                    /
+                  </kbd>
+                )}
+              </div>
+            </div>
+          )}
+
+          {filteredGroups.length === 0 && search && !collapsed && (
+            <div className="px-3 py-4 text-center text-xs text-sidebar-foreground/50">
+              Nenhum item encontrado
+            </div>
+          )}
+
+          {filteredGroups.map((group) => (
             <GroupSection
               key={group.label}
               group={group}
-              open={!!openGroups[group.label]}
+              open={!!openGroups[group.label] || !!search}
               onOpenChange={(o) => setOpenGroups((prev) => ({ ...prev, [group.label]: o }))}
               collapsed={collapsed}
             />
