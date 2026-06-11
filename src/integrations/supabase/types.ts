@@ -511,6 +511,268 @@ export type Database = {
           },
         ]
       }
+      finance_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          congregation_id: string | null
+          created_at: string
+          diff: Json | null
+          id: string
+          transaction_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          congregation_id?: string | null
+          created_at?: string
+          diff?: Json | null
+          id?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          congregation_id?: string | null
+          created_at?: string
+          diff?: Json | null
+          id?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_audit_logs_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_audit_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "finance_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_categories: {
+        Row: {
+          ativo: boolean
+          congregation_id: string | null
+          cor: string | null
+          created_at: string
+          id: string
+          nome: string
+          slug: string
+          tipo: Database["public"]["Enums"]["finance_tipo"]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          congregation_id?: string | null
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          slug: string
+          tipo: Database["public"]["Enums"]["finance_tipo"]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          congregation_id?: string | null
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          slug?: string
+          tipo?: Database["public"]["Enums"]["finance_tipo"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_categories_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_closings: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          congregation_id: string
+          created_at: string
+          created_by: string | null
+          data_fim: string
+          data_inicio: string
+          event_id: string | null
+          id: string
+          observacoes: string | null
+          periodo_tipo: Database["public"]["Enums"]["finance_closing_periodo"]
+          saldo: number
+          status: Database["public"]["Enums"]["finance_closing_status"]
+          total_entradas: number
+          total_saidas: number
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          congregation_id: string
+          created_at?: string
+          created_by?: string | null
+          data_fim: string
+          data_inicio: string
+          event_id?: string | null
+          id?: string
+          observacoes?: string | null
+          periodo_tipo: Database["public"]["Enums"]["finance_closing_periodo"]
+          saldo?: number
+          status?: Database["public"]["Enums"]["finance_closing_status"]
+          total_entradas?: number
+          total_saidas?: number
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          congregation_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string
+          data_inicio?: string
+          event_id?: string | null
+          id?: string
+          observacoes?: string | null
+          periodo_tipo?: Database["public"]["Enums"]["finance_closing_periodo"]
+          saldo?: number
+          status?: Database["public"]["Enums"]["finance_closing_status"]
+          total_entradas?: number
+          total_saidas?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_closings_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_closings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_transactions: {
+        Row: {
+          anonimo: boolean
+          approved_at: string | null
+          approved_by: string | null
+          category_id: string
+          comprovante_url: string | null
+          congregation_id: string
+          contribuinte_nome: string | null
+          created_at: string
+          created_by: string | null
+          data: string
+          descricao: string | null
+          event_id: string | null
+          forma_pagamento: Database["public"]["Enums"]["finance_forma_pagamento"]
+          id: string
+          member_id: string | null
+          observacoes: string | null
+          rejected_reason: string | null
+          status: Database["public"]["Enums"]["finance_status"]
+          tipo: Database["public"]["Enums"]["finance_tipo"]
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          anonimo?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          category_id: string
+          comprovante_url?: string | null
+          congregation_id: string
+          contribuinte_nome?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          descricao?: string | null
+          event_id?: string | null
+          forma_pagamento?: Database["public"]["Enums"]["finance_forma_pagamento"]
+          id?: string
+          member_id?: string | null
+          observacoes?: string | null
+          rejected_reason?: string | null
+          status?: Database["public"]["Enums"]["finance_status"]
+          tipo: Database["public"]["Enums"]["finance_tipo"]
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          anonimo?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          category_id?: string
+          comprovante_url?: string | null
+          congregation_id?: string
+          contribuinte_nome?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          descricao?: string | null
+          event_id?: string | null
+          forma_pagamento?: Database["public"]["Enums"]["finance_forma_pagamento"]
+          id?: string
+          member_id?: string | null
+          observacoes?: string | null
+          rejected_reason?: string | null
+          status?: Database["public"]["Enums"]["finance_status"]
+          tipo?: Database["public"]["Enums"]["finance_tipo"]
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mao_amiga_avisos: {
         Row: {
           campanha_id: string | null
@@ -1438,6 +1700,14 @@ export type Database = {
         Args: { _congregation_id: string; _user_id: string }
         Returns: boolean
       }
+      can_approve_finance: {
+        Args: { _congregation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_manage_finance: {
+        Args: { _congregation_id: string; _user_id: string }
+        Returns: boolean
+      }
       check_volunteer_conflict: {
         Args: { _event_id: string; _volunteer_id: string }
         Returns: {
@@ -1483,6 +1753,16 @@ export type Database = {
         | "reuniao"
         | "escala"
         | "ensaio"
+      finance_closing_periodo: "culto" | "semana" | "mes"
+      finance_closing_status: "aberto" | "fechado"
+      finance_forma_pagamento:
+        | "dinheiro"
+        | "pix"
+        | "cartao"
+        | "transferencia"
+        | "outros"
+      finance_status: "pendente" | "aprovado" | "rejeitado"
+      finance_tipo: "entrada" | "saida"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1638,6 +1918,17 @@ export const Constants = {
         "escala",
         "ensaio",
       ],
+      finance_closing_periodo: ["culto", "semana", "mes"],
+      finance_closing_status: ["aberto", "fechado"],
+      finance_forma_pagamento: [
+        "dinheiro",
+        "pix",
+        "cartao",
+        "transferencia",
+        "outros",
+      ],
+      finance_status: ["pendente", "aprovado", "rejeitado"],
+      finance_tipo: ["entrada", "saida"],
     },
   },
 } as const
