@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Church, Calendar, CalendarDays, Megaphone, BookOpen,
-  MapPin, Building2, Settings, LogOut, Users2, UserCog, ScrollText, HeartHandshake
+  MapPin, Building2, Settings, LogOut, Users2, UserCog, ScrollText, HeartHandshake, Wallet
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -26,6 +26,7 @@ const items = [
   { title: "Usuários", url: "/app/usuarios", icon: UserCog },
   { title: "Auditoria", url: "/app/auditoria", icon: ScrollText },
   { title: "Mão Amiga", url: "/app/mao-amiga", icon: HeartHandshake },
+  { title: "Financeiro", url: "/app/financeiro", icon: Wallet },
 ];
 
 export function AppSidebar() {
