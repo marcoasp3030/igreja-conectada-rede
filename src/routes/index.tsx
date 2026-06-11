@@ -1,22 +1,20 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { BrandLogo } from "@/components/brand-logo";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Church, Users, Calendar, BookOpen } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AD Setor 70 — Sistema de Gestão Eclesiástica" },
-      { name: "description", content: "Plataforma de gestão para a Assembleia de Deus Ministério Setor 70: congregações, membros, agenda, EBD e departamentos." },
+      { title: "Entrar — AD Setor 70" },
+      { name: "description", content: "Acesse o sistema de gestão da Assembleia de Deus Setor 70." },
     ],
   }),
   beforeLoad: async () => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") throw redirect({ to: "/auth" });
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: "/app" });
+    throw redirect({ to: "/auth" });
   },
-  component: Landing,
+  component: () => null,
 });
 
 function Landing() {
