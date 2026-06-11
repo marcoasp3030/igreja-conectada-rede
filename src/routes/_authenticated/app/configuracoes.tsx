@@ -25,9 +25,11 @@ export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: Configuracoes,
 });
 
+type RoleVariant = "default" | "gold" | "secondary" | "outline";
+
 const ROLE_META: Record<
   AppRole,
-  { label: string; icon: React.ElementType; variant: "default" | "gold" | "secondary" | "outline" }
+  { label: string; icon: React.ElementType; variant: RoleVariant }
 > = {
   admin_sede: { label: "Admin Sede", icon: Crown, variant: "gold" },
   admin_congregacao: { label: "Admin Congregação", icon: Shield, variant: "default" },
@@ -37,12 +39,12 @@ const ROLE_META: Record<
   secretario: { label: "Secretário", icon: Shield, variant: "default" },
 };
 
-function RoleBadge({ role }: { role: string }) {
-  const meta = ROLE_META[role] ?? { label: role, icon: User, variant: "outline" };
+function RoleBadge({ role }: { role: AppRole }) {
+  const meta = ROLE_META[role] ?? { label: role, icon: User, variant: "outline" as RoleVariant };
   const Icon = meta.icon;
   const variant = meta.variant;
 
-  const classes: Record<string, string> = {
+  const classes: Record<RoleVariant, string> = {
     default:
       "bg-gradient-hero text-primary-foreground border-0 shadow-soft",
     gold:
@@ -118,6 +120,35 @@ function Configuracoes() {
     user?.email?.[0].toUpperCase() ??
     "U";
 
+  const roles: AppRole[] = data?.roles ?? ["membro"];
+
+  const HIERARCHY: {
+    role: AppRole;
+    desc: string;
+    icon: React.ElementType;
+  }[] = [
+    {
+      role: "admin_sede",
+      desc: "Acesso completo a todas as congregações, usuários, financeiro e configurações.",
+      icon: Crown,
+    },
+    {
+      role: "admin_congregacao",
+      desc: "Gerencia usuários e dados da própria congregação, incluindo financeiro local.",
+      icon: Shield,
+    },
+    {
+      role: "lider_departamento",
+      desc: "Coordena atividades do departamento vinculado, sem acesso administrativo.",
+      icon: Users,
+    },
+    {
+      role: "membro",
+      desc: "Visualiza informações públicas e agenda pessoal. Não edita dados.",
+      icon: User,
+    },
+  ];
+
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader
@@ -142,7 +173,7 @@ function Configuracoes() {
               <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
             <div className="flex flex-wrap gap-2 pb-1">
-              {(data?.roles ?? ["membro"]).map((r: string) => (
+              {roles.map((r) => (
                 <RoleBadge key={r} role={r} />
               ))}
             </div>
@@ -152,11 +183,7 @@ function Configuracoes() {
 
       {/* Info grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <InfoRow
-          icon={Mail}
-          label="E-mail"
-          value={user?.email ?? "—"}
-        />
+        <InfoRow icon={Mail} label="E-mail" value={user?.email ?? "—"} />
         <InfoRow
           icon={Building2}
           label="Congregação"
@@ -209,35 +236,10 @@ function Configuracoes() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {[
-              {
-                role: "admin_sede",
-                desc: "Acesso completo a todas as congregações, usuários, financeiro e configurações.",
-                icon: Crown,
-                color: "gold",
-              },
-              {
-                role: "admin_congregacao",
-                desc: "Gerencia usuários e dados da própria congregação, incluindo financeiro local.",
-                icon: Shield,
-                color: "primary",
-              },
-              {
-                role: "lider_departamento",
-                desc: "Coordena atividades do departamento vinculado, sem acesso administrativo.",
-                icon: Users,
-                color: "muted",
-              },
-              {
-                role: "membro",
-                desc: "Visualiza informações públicas e agenda pessoal. Não edita dados.",
-                icon: User,
-                color: "muted",
-              },
-            ].map((item) => {
+            {HIERARCHY.map((item) => {
               const meta = ROLE_META[item.role];
               const Icon = item.icon;
-              const isActive = (data?.roles ?? []).includes(item.role);
+              const isActive = roles.includes(item.role);
               return (
                 <div
                   key={item.role}
