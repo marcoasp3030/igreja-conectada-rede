@@ -127,6 +127,16 @@ function Usuarios() {
     onError: (e: any) => toast.error(e?.message ?? "Falha"),
   });
 
+  const toggleActive = useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      setActive({ data: { user_id: id, active } }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.active ? "Acesso liberado" : "Usuário inativado");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha"),
+  });
+
   const filtered = (users as any[]).filter((u) => {
     const t = search.toLowerCase();
     return !t || u.full_name?.toLowerCase().includes(t) || u.email?.toLowerCase().includes(t);
