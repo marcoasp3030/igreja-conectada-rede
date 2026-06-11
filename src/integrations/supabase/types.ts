@@ -600,6 +600,60 @@ export type Database = {
           },
         ]
       }
+      finance_closing_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          closing_id: string
+          congregation_id: string
+          created_at: string
+          diff: Json | null
+          from_status: string | null
+          id: string
+          observacao: string | null
+          to_status: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          closing_id: string
+          congregation_id: string
+          created_at?: string
+          diff?: Json | null
+          from_status?: string | null
+          id?: string
+          observacao?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          closing_id?: string
+          congregation_id?: string
+          created_at?: string
+          diff?: Json | null
+          from_status?: string | null
+          id?: string
+          observacao?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_closing_history_closing_id_fkey"
+            columns: ["closing_id"]
+            isOneToOne: false
+            referencedRelation: "finance_closings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_closing_history_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_closings: {
         Row: {
           closed_at: string | null
@@ -613,8 +667,13 @@ export type Database = {
           id: string
           observacoes: string | null
           periodo_tipo: Database["public"]["Enums"]["finance_closing_periodo"]
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           saldo: number
           status: Database["public"]["Enums"]["finance_closing_status"]
+          submitted_at: string | null
+          submitted_by: string | null
           total_entradas: number
           total_saidas: number
           updated_at: string
@@ -631,8 +690,13 @@ export type Database = {
           id?: string
           observacoes?: string | null
           periodo_tipo: Database["public"]["Enums"]["finance_closing_periodo"]
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           saldo?: number
           status?: Database["public"]["Enums"]["finance_closing_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           total_entradas?: number
           total_saidas?: number
           updated_at?: string
@@ -649,8 +713,13 @@ export type Database = {
           id?: string
           observacoes?: string | null
           periodo_tipo?: Database["public"]["Enums"]["finance_closing_periodo"]
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           saldo?: number
           status?: Database["public"]["Enums"]["finance_closing_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           total_entradas?: number
           total_saidas?: number
           updated_at?: string
@@ -1708,6 +1777,10 @@ export type Database = {
         Args: { _congregation_id: string; _user_id: string }
         Returns: boolean
       }
+      can_review_finance: {
+        Args: { _congregation_id: string; _user_id: string }
+        Returns: boolean
+      }
       check_volunteer_conflict: {
         Args: { _event_id: string; _volunteer_id: string }
         Returns: {
@@ -1758,7 +1831,12 @@ export type Database = {
         | "escala"
         | "ensaio"
       finance_closing_periodo: "culto" | "semana" | "mes"
-      finance_closing_status: "aberto" | "fechado"
+      finance_closing_status:
+        | "aberto"
+        | "fechado"
+        | "em_revisao"
+        | "aprovado"
+        | "rejeitado"
       finance_forma_pagamento:
         | "dinheiro"
         | "pix"
@@ -1923,7 +2001,13 @@ export const Constants = {
         "ensaio",
       ],
       finance_closing_periodo: ["culto", "semana", "mes"],
-      finance_closing_status: ["aberto", "fechado"],
+      finance_closing_status: [
+        "aberto",
+        "fechado",
+        "em_revisao",
+        "aprovado",
+        "rejeitado",
+      ],
       finance_forma_pagamento: [
         "dinheiro",
         "pix",
