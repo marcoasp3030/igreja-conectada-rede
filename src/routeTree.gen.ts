@@ -17,6 +17,7 @@ import { Route as AuthenticatedAppUsuariosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppMembrosRouteImport } from './routes/_authenticated/app/membros'
 import { Route as AuthenticatedAppMapaRouteImport } from './routes/_authenticated/app/mapa'
 import { Route as AuthenticatedAppMaoAmigaRouteImport } from './routes/_authenticated/app/mao-amiga'
+import { Route as AuthenticatedAppFinanceiroRouteImport } from './routes/_authenticated/app/financeiro'
 import { Route as AuthenticatedAppEscalasRouteImport } from './routes/_authenticated/app/escalas'
 import { Route as AuthenticatedAppEbdRouteImport } from './routes/_authenticated/app/ebd'
 import { Route as AuthenticatedAppDepartamentosRouteImport } from './routes/_authenticated/app/departamentos'
@@ -26,6 +27,10 @@ import { Route as AuthenticatedAppCalendarioRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppAvisosRouteImport } from './routes/_authenticated/app/avisos'
 import { Route as AuthenticatedAppAuditoriaRouteImport } from './routes/_authenticated/app/auditoria'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
+import { Route as AuthenticatedAppFinanceiroIndexRouteImport } from './routes/_authenticated/app/financeiro.index'
+import { Route as AuthenticatedAppFinanceiroRelatoriosRouteImport } from './routes/_authenticated/app/financeiro.relatorios'
+import { Route as AuthenticatedAppFinanceiroLancamentosRouteImport } from './routes/_authenticated/app/financeiro.lancamentos'
+import { Route as AuthenticatedAppFinanceiroDespesasRouteImport } from './routes/_authenticated/app/financeiro.despesas'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -66,6 +71,12 @@ const AuthenticatedAppMaoAmigaRoute =
   AuthenticatedAppMaoAmigaRouteImport.update({
     id: '/app/mao-amiga',
     path: '/app/mao-amiga',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppFinanceiroRoute =
+  AuthenticatedAppFinanceiroRouteImport.update({
+    id: '/app/financeiro',
+    path: '/app/financeiro',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAppEscalasRoute = AuthenticatedAppEscalasRouteImport.update({
@@ -118,6 +129,30 @@ const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
   path: '/app/agenda',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAppFinanceiroIndexRoute =
+  AuthenticatedAppFinanceiroIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppFinanceiroRoute,
+  } as any)
+const AuthenticatedAppFinanceiroRelatoriosRoute =
+  AuthenticatedAppFinanceiroRelatoriosRouteImport.update({
+    id: '/relatorios',
+    path: '/relatorios',
+    getParentRoute: () => AuthenticatedAppFinanceiroRoute,
+  } as any)
+const AuthenticatedAppFinanceiroLancamentosRoute =
+  AuthenticatedAppFinanceiroLancamentosRouteImport.update({
+    id: '/lancamentos',
+    path: '/lancamentos',
+    getParentRoute: () => AuthenticatedAppFinanceiroRoute,
+  } as any)
+const AuthenticatedAppFinanceiroDespesasRoute =
+  AuthenticatedAppFinanceiroDespesasRouteImport.update({
+    id: '/despesas',
+    path: '/despesas',
+    getParentRoute: () => AuthenticatedAppFinanceiroRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,11 +166,16 @@ export interface FileRoutesByFullPath {
   '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/app/ebd': typeof AuthenticatedAppEbdRoute
   '/app/escalas': typeof AuthenticatedAppEscalasRoute
+  '/app/financeiro': typeof AuthenticatedAppFinanceiroRouteWithChildren
   '/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
   '/app/membros': typeof AuthenticatedAppMembrosRoute
   '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/financeiro/despesas': typeof AuthenticatedAppFinanceiroDespesasRoute
+  '/app/financeiro/lancamentos': typeof AuthenticatedAppFinanceiroLancamentosRoute
+  '/app/financeiro/relatorios': typeof AuthenticatedAppFinanceiroRelatoriosRoute
+  '/app/financeiro/': typeof AuthenticatedAppFinanceiroIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -154,6 +194,10 @@ export interface FileRoutesByTo {
   '/app/membros': typeof AuthenticatedAppMembrosRoute
   '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/financeiro/despesas': typeof AuthenticatedAppFinanceiroDespesasRoute
+  '/app/financeiro/lancamentos': typeof AuthenticatedAppFinanceiroLancamentosRoute
+  '/app/financeiro/relatorios': typeof AuthenticatedAppFinanceiroRelatoriosRoute
+  '/app/financeiro': typeof AuthenticatedAppFinanceiroIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -169,11 +213,16 @@ export interface FileRoutesById {
   '/_authenticated/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/_authenticated/app/ebd': typeof AuthenticatedAppEbdRoute
   '/_authenticated/app/escalas': typeof AuthenticatedAppEscalasRoute
+  '/_authenticated/app/financeiro': typeof AuthenticatedAppFinanceiroRouteWithChildren
   '/_authenticated/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
   '/_authenticated/app/mapa': typeof AuthenticatedAppMapaRoute
   '/_authenticated/app/membros': typeof AuthenticatedAppMembrosRoute
   '/_authenticated/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/financeiro/despesas': typeof AuthenticatedAppFinanceiroDespesasRoute
+  '/_authenticated/app/financeiro/lancamentos': typeof AuthenticatedAppFinanceiroLancamentosRoute
+  '/_authenticated/app/financeiro/relatorios': typeof AuthenticatedAppFinanceiroRelatoriosRoute
+  '/_authenticated/app/financeiro/': typeof AuthenticatedAppFinanceiroIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -189,11 +238,16 @@ export interface FileRouteTypes {
     | '/app/departamentos'
     | '/app/ebd'
     | '/app/escalas'
+    | '/app/financeiro'
     | '/app/mao-amiga'
     | '/app/mapa'
     | '/app/membros'
     | '/app/usuarios'
     | '/app/'
+    | '/app/financeiro/despesas'
+    | '/app/financeiro/lancamentos'
+    | '/app/financeiro/relatorios'
+    | '/app/financeiro/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -212,6 +266,10 @@ export interface FileRouteTypes {
     | '/app/membros'
     | '/app/usuarios'
     | '/app'
+    | '/app/financeiro/despesas'
+    | '/app/financeiro/lancamentos'
+    | '/app/financeiro/relatorios'
+    | '/app/financeiro'
   id:
     | '__root__'
     | '/'
@@ -226,11 +284,16 @@ export interface FileRouteTypes {
     | '/_authenticated/app/departamentos'
     | '/_authenticated/app/ebd'
     | '/_authenticated/app/escalas'
+    | '/_authenticated/app/financeiro'
     | '/_authenticated/app/mao-amiga'
     | '/_authenticated/app/mapa'
     | '/_authenticated/app/membros'
     | '/_authenticated/app/usuarios'
     | '/_authenticated/app/'
+    | '/_authenticated/app/financeiro/despesas'
+    | '/_authenticated/app/financeiro/lancamentos'
+    | '/_authenticated/app/financeiro/relatorios'
+    | '/_authenticated/app/financeiro/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -297,6 +360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppMaoAmigaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/financeiro': {
+      id: '/_authenticated/app/financeiro'
+      path: '/app/financeiro'
+      fullPath: '/app/financeiro'
+      preLoaderRoute: typeof AuthenticatedAppFinanceiroRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app/escalas': {
       id: '/_authenticated/app/escalas'
       path: '/app/escalas'
@@ -360,8 +430,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAgendaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/financeiro/': {
+      id: '/_authenticated/app/financeiro/'
+      path: '/'
+      fullPath: '/app/financeiro/'
+      preLoaderRoute: typeof AuthenticatedAppFinanceiroIndexRouteImport
+      parentRoute: typeof AuthenticatedAppFinanceiroRoute
+    }
+    '/_authenticated/app/financeiro/relatorios': {
+      id: '/_authenticated/app/financeiro/relatorios'
+      path: '/relatorios'
+      fullPath: '/app/financeiro/relatorios'
+      preLoaderRoute: typeof AuthenticatedAppFinanceiroRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedAppFinanceiroRoute
+    }
+    '/_authenticated/app/financeiro/lancamentos': {
+      id: '/_authenticated/app/financeiro/lancamentos'
+      path: '/lancamentos'
+      fullPath: '/app/financeiro/lancamentos'
+      preLoaderRoute: typeof AuthenticatedAppFinanceiroLancamentosRouteImport
+      parentRoute: typeof AuthenticatedAppFinanceiroRoute
+    }
+    '/_authenticated/app/financeiro/despesas': {
+      id: '/_authenticated/app/financeiro/despesas'
+      path: '/despesas'
+      fullPath: '/app/financeiro/despesas'
+      preLoaderRoute: typeof AuthenticatedAppFinanceiroDespesasRouteImport
+      parentRoute: typeof AuthenticatedAppFinanceiroRoute
+    }
   }
 }
+
+interface AuthenticatedAppFinanceiroRouteChildren {
+  AuthenticatedAppFinanceiroDespesasRoute: typeof AuthenticatedAppFinanceiroDespesasRoute
+  AuthenticatedAppFinanceiroLancamentosRoute: typeof AuthenticatedAppFinanceiroLancamentosRoute
+  AuthenticatedAppFinanceiroRelatoriosRoute: typeof AuthenticatedAppFinanceiroRelatoriosRoute
+  AuthenticatedAppFinanceiroIndexRoute: typeof AuthenticatedAppFinanceiroIndexRoute
+}
+
+const AuthenticatedAppFinanceiroRouteChildren: AuthenticatedAppFinanceiroRouteChildren =
+  {
+    AuthenticatedAppFinanceiroDespesasRoute:
+      AuthenticatedAppFinanceiroDespesasRoute,
+    AuthenticatedAppFinanceiroLancamentosRoute:
+      AuthenticatedAppFinanceiroLancamentosRoute,
+    AuthenticatedAppFinanceiroRelatoriosRoute:
+      AuthenticatedAppFinanceiroRelatoriosRoute,
+    AuthenticatedAppFinanceiroIndexRoute: AuthenticatedAppFinanceiroIndexRoute,
+  }
+
+const AuthenticatedAppFinanceiroRouteWithChildren =
+  AuthenticatedAppFinanceiroRoute._addFileChildren(
+    AuthenticatedAppFinanceiroRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
@@ -373,6 +494,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppDepartamentosRoute: typeof AuthenticatedAppDepartamentosRoute
   AuthenticatedAppEbdRoute: typeof AuthenticatedAppEbdRoute
   AuthenticatedAppEscalasRoute: typeof AuthenticatedAppEscalasRoute
+  AuthenticatedAppFinanceiroRoute: typeof AuthenticatedAppFinanceiroRouteWithChildren
   AuthenticatedAppMaoAmigaRoute: typeof AuthenticatedAppMaoAmigaRoute
   AuthenticatedAppMapaRoute: typeof AuthenticatedAppMapaRoute
   AuthenticatedAppMembrosRoute: typeof AuthenticatedAppMembrosRoute
@@ -390,6 +512,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppDepartamentosRoute: AuthenticatedAppDepartamentosRoute,
   AuthenticatedAppEbdRoute: AuthenticatedAppEbdRoute,
   AuthenticatedAppEscalasRoute: AuthenticatedAppEscalasRoute,
+  AuthenticatedAppFinanceiroRoute: AuthenticatedAppFinanceiroRouteWithChildren,
   AuthenticatedAppMaoAmigaRoute: AuthenticatedAppMaoAmigaRoute,
   AuthenticatedAppMapaRoute: AuthenticatedAppMapaRoute,
   AuthenticatedAppMembrosRoute: AuthenticatedAppMembrosRoute,
@@ -408,13 +531,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
