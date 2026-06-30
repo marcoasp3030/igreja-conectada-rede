@@ -59,6 +59,7 @@ const groups: MenuGroup[] = [
     items: [
       { title: "Avisos", url: "/app/avisos", icon: Megaphone },
       { title: "Mão Amiga", url: "/app/mao-amiga", icon: HeartHandshake },
+      { title: "Empresarial", url: "/app/empresarial", icon: Briefcase },
     ],
   },
   {
