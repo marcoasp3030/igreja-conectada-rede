@@ -204,39 +204,25 @@ function GroupSection({ group, open, onOpenChange, collapsed }: {
   }
 
   return (
-    <Collapsible
-      open={open || hasActive}
-      onOpenChange={onOpenChange}
-      className="group/collapsible"
-    >
-      <SidebarGroup className="py-1">
-        <SidebarGroupLabel asChild>
-          <CollapsibleTrigger
-            className={cn(
-              "group/trigger flex w-full items-center justify-between rounded-md px-2 py-1.5",
-              "text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/55",
-              "transition-colors hover:text-sidebar-foreground/90",
-            )}
-          >
-            <span className="flex items-center gap-1.5">
-              {group.label}
-              {hasActive && <span className="h-1 w-1 rounded-full bg-gold" />}
-            </span>
-            <ChevronRight className="h-3 w-3 transition-transform duration-300 group-data-[state=open]/collapsible:rotate-90" />
-          </CollapsibleTrigger>
-        </SidebarGroupLabel>
-        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-          <SidebarGroupContent className="pt-1">
-            <SidebarMenu className="gap-1">
-              {group.items.map((item) => {
-                const active = isItemActive(path, item.url);
-                return <ItemRow key={item.url} item={item} active={active} collapsed={false} />;
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </CollapsibleContent>
-      </SidebarGroup>
-    </Collapsible>
+    <SidebarGroup className="py-1">
+      <SidebarGroupLabel
+        className={cn(
+          "flex items-center gap-1.5 px-2 py-1.5",
+          "text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/55",
+        )}
+      >
+        {group.label}
+        {hasActive && <span className="h-1 w-1 rounded-full bg-gold" />}
+      </SidebarGroupLabel>
+      <SidebarGroupContent className="pt-1">
+        <SidebarMenu className="gap-1">
+          {group.items.map((item) => {
+            const active = isItemActive(path, item.url);
+            return <ItemRow key={item.url} item={item} active={active} collapsed={false} />;
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }
 
