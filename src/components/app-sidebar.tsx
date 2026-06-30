@@ -211,7 +211,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
-  const { openGroups, setOpenGroups } = useOpenGroups();
+  
 
   const [search, setSearch] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
