@@ -180,7 +180,20 @@ function AuthPage() {
               </p>
             </div>
 
+            {errorMsg && (
+              <div
+                role="alert"
+                className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                <p className="font-medium">Não foi possível autenticar</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-destructive/90 break-words">
+                  {errorMsg}
+                </p>
+              </div>
+            )}
+
             <Tabs defaultValue="signin" className="w-full">
+
               <TabsList className="grid w-full grid-cols-2 rounded-lg bg-muted/60 p-1">
                 <TabsTrigger value="signin" className="rounded-md">Entrar</TabsTrigger>
                 <TabsTrigger value="signup" className="rounded-md">Cadastrar</TabsTrigger>
