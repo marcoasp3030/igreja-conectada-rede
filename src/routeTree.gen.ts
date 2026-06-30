@@ -19,6 +19,7 @@ import { Route as AuthenticatedAppMapaRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAppMaoAmigaRouteImport } from './routes/_authenticated/app/mao-amiga'
 import { Route as AuthenticatedAppFinanceiroRouteImport } from './routes/_authenticated/app/financeiro'
 import { Route as AuthenticatedAppEscalasRouteImport } from './routes/_authenticated/app/escalas'
+import { Route as AuthenticatedAppEmpresarialRouteImport } from './routes/_authenticated/app/empresarial'
 import { Route as AuthenticatedAppEbdRouteImport } from './routes/_authenticated/app/ebd'
 import { Route as AuthenticatedAppDepartamentosRouteImport } from './routes/_authenticated/app/departamentos'
 import { Route as AuthenticatedAppCongregacoesRouteImport } from './routes/_authenticated/app/congregacoes'
@@ -85,6 +86,12 @@ const AuthenticatedAppEscalasRoute = AuthenticatedAppEscalasRouteImport.update({
   path: '/app/escalas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAppEmpresarialRoute =
+  AuthenticatedAppEmpresarialRouteImport.update({
+    id: '/app/empresarial',
+    path: '/app/empresarial',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppEbdRoute = AuthenticatedAppEbdRouteImport.update({
   id: '/app/ebd',
   path: '/app/ebd',
@@ -172,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
   '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/app/ebd': typeof AuthenticatedAppEbdRoute
+  '/app/empresarial': typeof AuthenticatedAppEmpresarialRoute
   '/app/escalas': typeof AuthenticatedAppEscalasRoute
   '/app/financeiro': typeof AuthenticatedAppFinanceiroRouteWithChildren
   '/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
@@ -196,6 +204,7 @@ export interface FileRoutesByTo {
   '/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
   '/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/app/ebd': typeof AuthenticatedAppEbdRoute
+  '/app/empresarial': typeof AuthenticatedAppEmpresarialRoute
   '/app/escalas': typeof AuthenticatedAppEscalasRoute
   '/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
@@ -221,6 +230,7 @@ export interface FileRoutesById {
   '/_authenticated/app/congregacoes': typeof AuthenticatedAppCongregacoesRoute
   '/_authenticated/app/departamentos': typeof AuthenticatedAppDepartamentosRoute
   '/_authenticated/app/ebd': typeof AuthenticatedAppEbdRoute
+  '/_authenticated/app/empresarial': typeof AuthenticatedAppEmpresarialRoute
   '/_authenticated/app/escalas': typeof AuthenticatedAppEscalasRoute
   '/_authenticated/app/financeiro': typeof AuthenticatedAppFinanceiroRouteWithChildren
   '/_authenticated/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/app/congregacoes'
     | '/app/departamentos'
     | '/app/ebd'
+    | '/app/empresarial'
     | '/app/escalas'
     | '/app/financeiro'
     | '/app/mao-amiga'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/app/congregacoes'
     | '/app/departamentos'
     | '/app/ebd'
+    | '/app/empresarial'
     | '/app/escalas'
     | '/app/mao-amiga'
     | '/app/mapa'
@@ -295,6 +307,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/congregacoes'
     | '/_authenticated/app/departamentos'
     | '/_authenticated/app/ebd'
+    | '/_authenticated/app/empresarial'
     | '/_authenticated/app/escalas'
     | '/_authenticated/app/financeiro'
     | '/_authenticated/app/mao-amiga'
@@ -385,6 +398,13 @@ declare module '@tanstack/react-router' {
       path: '/app/escalas'
       fullPath: '/app/escalas'
       preLoaderRoute: typeof AuthenticatedAppEscalasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/empresarial': {
+      id: '/_authenticated/app/empresarial'
+      path: '/app/empresarial'
+      fullPath: '/app/empresarial'
+      preLoaderRoute: typeof AuthenticatedAppEmpresarialRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app/ebd': {
@@ -516,6 +536,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppCongregacoesRoute: typeof AuthenticatedAppCongregacoesRoute
   AuthenticatedAppDepartamentosRoute: typeof AuthenticatedAppDepartamentosRoute
   AuthenticatedAppEbdRoute: typeof AuthenticatedAppEbdRoute
+  AuthenticatedAppEmpresarialRoute: typeof AuthenticatedAppEmpresarialRoute
   AuthenticatedAppEscalasRoute: typeof AuthenticatedAppEscalasRoute
   AuthenticatedAppFinanceiroRoute: typeof AuthenticatedAppFinanceiroRouteWithChildren
   AuthenticatedAppMaoAmigaRoute: typeof AuthenticatedAppMaoAmigaRoute
@@ -534,6 +555,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppCongregacoesRoute: AuthenticatedAppCongregacoesRoute,
   AuthenticatedAppDepartamentosRoute: AuthenticatedAppDepartamentosRoute,
   AuthenticatedAppEbdRoute: AuthenticatedAppEbdRoute,
+  AuthenticatedAppEmpresarialRoute: AuthenticatedAppEmpresarialRoute,
   AuthenticatedAppEscalasRoute: AuthenticatedAppEscalasRoute,
   AuthenticatedAppFinanceiroRoute: AuthenticatedAppFinanceiroRouteWithChildren,
   AuthenticatedAppMaoAmigaRoute: AuthenticatedAppMaoAmigaRoute,
