@@ -3,14 +3,13 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Church, Calendar, CalendarDays, Megaphone, BookOpen,
   MapPin, Building2, Settings, LogOut, Users2, UserCog, ScrollText, HeartHandshake, Wallet,
-  ChevronRight, Sparkles, Search, X,
+  Sparkles, Search, X,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,22 +71,6 @@ const groups: MenuGroup[] = [
   },
 ];
 
-function useOpenGroups() {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem("sidebar-groups");
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem("sidebar-groups", JSON.stringify(openGroups));
-  }, [openGroups]);
-
-  return { openGroups, setOpenGroups };
-}
 
 function isItemActive(path: string, url: string) {
   return path === url || (url !== "/app" && path.startsWith(url));
@@ -136,10 +119,8 @@ function ItemRow({ item, active, collapsed }: { item: MenuItem; active: boolean;
   return <SidebarMenuItem>{content}</SidebarMenuItem>;
 }
 
-function GroupSection({ group, open, onOpenChange, collapsed }: {
+function GroupSection({ group, collapsed }: {
   group: MenuGroup;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   collapsed: boolean;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -204,39 +185,25 @@ function GroupSection({ group, open, onOpenChange, collapsed }: {
   }
 
   return (
-    <Collapsible
-      open={open || hasActive}
-      onOpenChange={onOpenChange}
-      className="group/collapsible"
-    >
-      <SidebarGroup className="py-1">
-        <SidebarGroupLabel asChild>
-          <CollapsibleTrigger
-            className={cn(
-              "group/trigger flex w-full items-center justify-between rounded-md px-2 py-1.5",
-              "text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/55",
-              "transition-colors hover:text-sidebar-foreground/90",
-            )}
-          >
-            <span className="flex items-center gap-1.5">
-              {group.label}
-              {hasActive && <span className="h-1 w-1 rounded-full bg-gold" />}
-            </span>
-            <ChevronRight className="h-3 w-3 transition-transform duration-300 group-data-[state=open]/collapsible:rotate-90" />
-          </CollapsibleTrigger>
-        </SidebarGroupLabel>
-        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-          <SidebarGroupContent className="pt-1">
-            <SidebarMenu className="gap-1">
-              {group.items.map((item) => {
-                const active = isItemActive(path, item.url);
-                return <ItemRow key={item.url} item={item} active={active} collapsed={false} />;
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </CollapsibleContent>
-      </SidebarGroup>
-    </Collapsible>
+    <SidebarGroup className="py-1">
+      <SidebarGroupLabel
+        className={cn(
+          "flex items-center gap-1.5 px-2 py-1.5",
+          "text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/55",
+        )}
+      >
+        {group.label}
+        {hasActive && <span className="h-1 w-1 rounded-full bg-gold" />}
+      </SidebarGroupLabel>
+      <SidebarGroupContent className="pt-1">
+        <SidebarMenu className="gap-1">
+          {group.items.map((item) => {
+            const active = isItemActive(path, item.url);
+            return <ItemRow key={item.url} item={item} active={active} collapsed={false} />;
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }
 
@@ -244,7 +211,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
-  const { openGroups, setOpenGroups } = useOpenGroups();
+  
 
   const [search, setSearch] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -365,13 +332,7 @@ export function AppSidebar() {
           )}
 
           {filteredGroups.map((group) => (
-            <GroupSection
-              key={group.label}
-              group={group}
-              open={!!openGroups[group.label] || !!search}
-              onOpenChange={(o) => setOpenGroups((prev) => ({ ...prev, [group.label]: o }))}
-              collapsed={collapsed}
-            />
+            <GroupSection key={group.label} group={group} collapsed={collapsed} />
           ))}
         </SidebarContent>
 
