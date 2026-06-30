@@ -3,7 +3,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Church, Calendar, CalendarDays, Megaphone, BookOpen,
   MapPin, Building2, Settings, LogOut, Users2, UserCog, ScrollText, HeartHandshake, Wallet,
-  Sparkles, Search, X,
+  Sparkles, Search, X, Briefcase,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -59,6 +59,7 @@ const groups: MenuGroup[] = [
     items: [
       { title: "Avisos", url: "/app/avisos", icon: Megaphone },
       { title: "Mão Amiga", url: "/app/mao-amiga", icon: HeartHandshake },
+      { title: "Empresarial", url: "/app/empresarial", icon: Briefcase },
     ],
   },
   {
