@@ -64,6 +64,83 @@ export type Database = {
           },
         ]
       }
+      business_listings: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          categoria: string | null
+          congregation_id: string | null
+          created_at: string
+          descricao: string
+          email: string | null
+          endereco: string | null
+          foto_url: string | null
+          id: string
+          instagram: string | null
+          nome: string
+          profissao: string
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["business_listing_status"]
+          telefone: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          categoria?: string | null
+          congregation_id?: string | null
+          created_at?: string
+          descricao: string
+          email?: string | null
+          endereco?: string | null
+          foto_url?: string | null
+          id?: string
+          instagram?: string | null
+          nome: string
+          profissao: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["business_listing_status"]
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          categoria?: string | null
+          congregation_id?: string | null
+          created_at?: string
+          descricao?: string
+          email?: string | null
+          endereco?: string | null
+          foto_url?: string | null
+          id?: string
+          instagram?: string | null
+          nome?: string
+          profissao?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["business_listing_status"]
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_listings_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       congregations: {
         Row: {
           active_departments: string[] | null
@@ -1798,6 +1875,10 @@ export type Database = {
         Args: { _congregation_id: string; _user_id: string }
         Returns: boolean
       }
+      can_moderate_business: {
+        Args: { _congregation_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_review_finance: {
         Args: { _congregation_id: string; _user_id: string }
         Returns: boolean
@@ -1833,6 +1914,7 @@ export type Database = {
         | "membro"
         | "tesoureiro"
         | "secretario"
+      business_listing_status: "pendente" | "aprovado" | "rejeitado"
       department_type:
         | "UMADB"
         | "UFADEB"
@@ -2001,6 +2083,7 @@ export const Constants = {
         "tesoureiro",
         "secretario",
       ],
+      business_listing_status: ["pendente", "aprovado", "rejeitado"],
       department_type: [
         "UMADB",
         "UFADEB",
