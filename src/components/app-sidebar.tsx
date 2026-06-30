@@ -136,10 +136,8 @@ function ItemRow({ item, active, collapsed }: { item: MenuItem; active: boolean;
   return <SidebarMenuItem>{content}</SidebarMenuItem>;
 }
 
-function GroupSection({ group, open, onOpenChange, collapsed }: {
+function GroupSection({ group, collapsed }: {
   group: MenuGroup;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   collapsed: boolean;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
