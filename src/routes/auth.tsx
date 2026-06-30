@@ -27,18 +27,47 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const translateAuthError = (err: { message?: string; status?: number; code?: string }) => {
+    const msg = err?.message ?? "";
+    const code = err?.code ?? "";
+    if (code === "invalid_credentials" || /invalid login credentials/i.test(msg))
+      return "E-mail ou senha incorretos. Verifique os dados e tente novamente.";
+    if (/email not confirmed/i.test(msg))
+      return "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
+    if (/user not found/i.test(msg))
+      return "Usuário não encontrado. Confira o e-mail informado.";
+    if (/rate limit|too many/i.test(msg))
+      return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+    if (/network|fetch/i.test(msg))
+      return "Falha de conexão. Verifique sua internet e tente novamente.";
+    if (/password/i.test(msg) && /short|weak|character/i.test(msg))
+      return "Senha muito curta ou fraca. Use ao menos 6 caracteres.";
+    if (/already registered|already exists/i.test(msg))
+      return "Este e-mail já está cadastrado. Tente entrar.";
+    return msg || "Não foi possível autenticar. Tente novamente.";
+  };
+
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const friendly = translateAuthError(error);
+      setErrorMsg(`${friendly}${error.status ? ` (código ${error.status})` : ""}`);
+      console.error("[auth] signIn failed", { status: error.status, code: (error as any).code, message: error.message });
+      return toast.error(friendly);
+    }
     toast.success("Bem-vindo(a)!");
     navigate({ to: "/app" });
   };
 
   const signUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -49,7 +78,12 @@ function AuthPage() {
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const friendly = translateAuthError(error);
+      setErrorMsg(`${friendly}${error.status ? ` (código ${error.status})` : ""}`);
+      console.error("[auth] signUp failed", { status: error.status, code: (error as any).code, message: error.message });
+      return toast.error(friendly);
+    }
     toast.success("Cadastro criado! Verifique seu e-mail.");
   };
 
@@ -146,7 +180,20 @@ function AuthPage() {
               </p>
             </div>
 
+            {errorMsg && (
+              <div
+                role="alert"
+                className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                <p className="font-medium">Não foi possível autenticar</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-destructive/90 break-words">
+                  {errorMsg}
+                </p>
+              </div>
+            )}
+
             <Tabs defaultValue="signin" className="w-full">
+
               <TabsList className="grid w-full grid-cols-2 rounded-lg bg-muted/60 p-1">
                 <TabsTrigger value="signin" className="rounded-md">Entrar</TabsTrigger>
                 <TabsTrigger value="signup" className="rounded-md">Cadastrar</TabsTrigger>
