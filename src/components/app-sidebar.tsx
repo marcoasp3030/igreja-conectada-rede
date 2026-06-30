@@ -351,13 +351,7 @@ export function AppSidebar() {
           )}
 
           {filteredGroups.map((group) => (
-            <GroupSection
-              key={group.label}
-              group={group}
-              open={!!openGroups[group.label] || !!search}
-              onOpenChange={(o) => setOpenGroups((prev) => ({ ...prev, [group.label]: o }))}
-              collapsed={collapsed}
-            />
+            <GroupSection key={group.label} group={group} collapsed={collapsed} />
           ))}
         </SidebarContent>
 
