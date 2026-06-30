@@ -71,22 +71,6 @@ const groups: MenuGroup[] = [
   },
 ];
 
-function useOpenGroups() {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem("sidebar-groups");
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem("sidebar-groups", JSON.stringify(openGroups));
-  }, [openGroups]);
-
-  return { openGroups, setOpenGroups };
-}
 
 function isItemActive(path: string, url: string) {
   return path === url || (url !== "/app" && path.startsWith(url));
