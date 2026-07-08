@@ -241,18 +241,37 @@ function Dashboard() {
   const voluntariosUnicos = new Set(data.assignments.map((a) => a.volunteer_id)).size;
   const coberturaPct = totalAssign > 0 ? Math.round((aprovados / totalAssign) * 100) : 0;
 
-  // Aniversariantes do mês (todas as congregações)
-  const currentMonthNum = new Date().getMonth() + 1;
-  const aniversariantes = data.members
+  // Aniversariantes (hoje + mês) agrupados por congregação
+  const today = new Date();
+  const currentMonthNum = today.getMonth() + 1;
+  const currentDay = today.getDate();
+  type Aniv = { id: string; name: string; phone: string | null; cong: string; congId: string; day: number };
+  const aniversariantesMes: Aniv[] = data.members
     .filter((m) => m.active && m.birth_date && new Date(m.birth_date + "T00:00:00").getMonth() + 1 === currentMonthNum)
     .map((m) => ({
       id: m.id,
       name: m.full_name,
       phone: m.phone,
       cong: congNameById.get(m.congregation_id) ?? "—",
+      congId: m.congregation_id,
       day: new Date(m.birth_date! + "T00:00:00").getDate(),
     }))
-    .sort((a, b) => a.day - b.day);
+    .sort((a, b) => a.day - b.day || a.name.localeCompare(b.name));
+
+  const aniversariantesHoje = aniversariantesMes.filter((a) => a.day === currentDay);
+
+  const groupByCong = (list: Aniv[]) => {
+    const map = new Map<string, { cong: string; items: Aniv[] }>();
+    for (const a of list) {
+      const cur = map.get(a.congId) ?? { cong: a.cong, items: [] };
+      cur.items.push(a);
+      map.set(a.congId, cur);
+    }
+    return Array.from(map.values()).sort((a, b) => b.items.length - a.items.length || a.cong.localeCompare(b.cong));
+  };
+  const gruposMes = groupByCong(aniversariantesMes);
+  const gruposHoje = groupByCong(aniversariantesHoje);
+
 
   // Alertas EBD baixa frequência (últimos 3 meses < LOW_EBD_PCT)
   const alertasEBD = ranking
