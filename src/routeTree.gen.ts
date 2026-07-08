@@ -28,6 +28,7 @@ import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppCalendarioRouteImport } from './routes/_authenticated/app/calendario'
 import { Route as AuthenticatedAppAvisosRouteImport } from './routes/_authenticated/app/avisos'
 import { Route as AuthenticatedAppAuditoriaRouteImport } from './routes/_authenticated/app/auditoria'
+import { Route as AuthenticatedAppAniversariantesRouteImport } from './routes/_authenticated/app/aniversariantes'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 import { Route as AuthenticatedAppFinanceiroIndexRouteImport } from './routes/_authenticated/app/financeiro.index'
 import { Route as AuthenticatedAppFinanceiroRelatoriosRouteImport } from './routes/_authenticated/app/financeiro.relatorios'
@@ -139,6 +140,12 @@ const AuthenticatedAppAuditoriaRoute =
     path: '/app/auditoria',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAppAniversariantesRoute =
+  AuthenticatedAppAniversariantesRouteImport.update({
+    id: '/app/aniversariantes',
+    path: '/app/aniversariantes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
   id: '/app/agenda',
   path: '/app/agenda',
@@ -179,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/aniversariantes': typeof AuthenticatedAppAniversariantesRoute
   '/app/auditoria': typeof AuthenticatedAppAuditoriaRoute
   '/app/avisos': typeof AuthenticatedAppAvisosRoute
   '/app/calendario': typeof AuthenticatedAppCalendarioRoute
@@ -205,6 +213,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/aniversariantes': typeof AuthenticatedAppAniversariantesRoute
   '/app/auditoria': typeof AuthenticatedAppAuditoriaRoute
   '/app/avisos': typeof AuthenticatedAppAvisosRoute
   '/app/calendario': typeof AuthenticatedAppCalendarioRoute
@@ -232,6 +241,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/_authenticated/app/aniversariantes': typeof AuthenticatedAppAniversariantesRoute
   '/_authenticated/app/auditoria': typeof AuthenticatedAppAuditoriaRoute
   '/_authenticated/app/avisos': typeof AuthenticatedAppAvisosRoute
   '/_authenticated/app/calendario': typeof AuthenticatedAppCalendarioRoute
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/agenda'
+    | '/app/aniversariantes'
     | '/app/auditoria'
     | '/app/avisos'
     | '/app/calendario'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/agenda'
+    | '/app/aniversariantes'
     | '/app/auditoria'
     | '/app/avisos'
     | '/app/calendario'
@@ -312,6 +324,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/app/agenda'
+    | '/_authenticated/app/aniversariantes'
     | '/_authenticated/app/auditoria'
     | '/_authenticated/app/avisos'
     | '/_authenticated/app/calendario'
@@ -476,6 +489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAuditoriaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/aniversariantes': {
+      id: '/_authenticated/app/aniversariantes'
+      path: '/app/aniversariantes'
+      fullPath: '/app/aniversariantes'
+      preLoaderRoute: typeof AuthenticatedAppAniversariantesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app/agenda': {
       id: '/_authenticated/app/agenda'
       path: '/app/agenda'
@@ -549,6 +569,7 @@ const AuthenticatedAppFinanceiroRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
+  AuthenticatedAppAniversariantesRoute: typeof AuthenticatedAppAniversariantesRoute
   AuthenticatedAppAuditoriaRoute: typeof AuthenticatedAppAuditoriaRoute
   AuthenticatedAppAvisosRoute: typeof AuthenticatedAppAvisosRoute
   AuthenticatedAppCalendarioRoute: typeof AuthenticatedAppCalendarioRoute
@@ -569,6 +590,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
+  AuthenticatedAppAniversariantesRoute: AuthenticatedAppAniversariantesRoute,
   AuthenticatedAppAuditoriaRoute: AuthenticatedAppAuditoriaRoute,
   AuthenticatedAppAvisosRoute: AuthenticatedAppAvisosRoute,
   AuthenticatedAppCalendarioRoute: AuthenticatedAppCalendarioRoute,
@@ -598,13 +620,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

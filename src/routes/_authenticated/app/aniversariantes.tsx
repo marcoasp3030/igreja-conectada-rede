@@ -75,7 +75,6 @@ function Aniversariantes() {
       <PageHeader
         title="Aniversariantes do Mês"
         description="Celebre a vida dos irmãos que aniversariam"
-        icon={Cake}
       />
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
