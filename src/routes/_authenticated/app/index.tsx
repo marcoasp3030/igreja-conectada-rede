@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/page-header";
@@ -525,34 +526,92 @@ function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* FASE 2 — Aniversariantes */}
+        {/* FASE 2 — Aniversariantes (hoje + do mês) agrupados por congregação */}
         <Card className="lg:col-span-2 shadow-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Cake className="h-4 w-4 text-pink-500" /> Aniversariantes do mês
-              <Badge variant="secondary" className="ml-2">{aniversariantes.length}</Badge>
-            </CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <Cake className="h-4 w-4 text-pink-500" /> Aniversariantes
+              </CardTitle>
+              <Link to="/app/aniversariantes" className="text-xs font-semibold text-primary hover:underline">
+                Ver todos →
+              </Link>
+            </div>
           </CardHeader>
           <CardContent>
-            {aniversariantes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum aniversariante este mês.</p>
-            ) : (
-              <div className="max-h-72 overflow-y-auto">
-                <ul className="divide-y">
-                  {aniversariantes.map((a) => (
-                    <li key={a.id} className="flex items-center justify-between py-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{a.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{a.cong}{a.phone ? ` · ${a.phone}` : ""}</p>
+            <Tabs defaultValue="hoje">
+              <TabsList>
+                <TabsTrigger value="hoje">
+                  Hoje <Badge variant="secondary" className="ml-2">{aniversariantesHoje.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="mes">
+                  Do mês <Badge variant="secondary" className="ml-2">{aniversariantesMes.length}</Badge>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="hoje" className="mt-3">
+                {gruposHoje.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum aniversariante hoje.</p>
+                ) : (
+                  <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+                    {gruposHoje.map((g) => (
+                      <div key={g.cong} className="rounded-lg border bg-card/40 p-3">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.cong}</p>
+                          <Badge variant="outline" className="border-pink-500/40 text-pink-500">{g.items.length}</Badge>
+                        </div>
+                        <ul className="divide-y">
+                          {g.items.map((a) => (
+                            <li key={a.id} className="flex items-center justify-between py-1.5">
+                              <p className="truncate text-sm font-medium">🎉 {a.name}</p>
+                              {a.phone && <span className="text-xs text-muted-foreground">{a.phone}</span>}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <Badge variant="outline" className="border-pink-500/40 text-pink-500">Dia {a.day}</Badge>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="mes" className="mt-3">
+                {gruposMes.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum aniversariante este mês.</p>
+                ) : (
+                  <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+                    {gruposMes.map((g) => (
+                      <div key={g.cong} className="rounded-lg border bg-card/40 p-3">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.cong}</p>
+                          <Badge variant="secondary">{g.items.length}</Badge>
+                        </div>
+                        <ul className="divide-y">
+                          {g.items.map((a) => {
+                            const isToday = a.day === currentDay;
+                            return (
+                              <li key={a.id} className="flex items-center justify-between py-1.5">
+                                <p className="truncate text-sm font-medium">
+                                  {isToday && "🎉 "}{a.name}
+                                </p>
+                                <Badge
+                                  variant={isToday ? "default" : "outline"}
+                                  className={isToday ? "" : "border-pink-500/40 text-pink-500"}
+                                >
+                                  Dia {a.day}
+                                </Badge>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
+
 
         {/* Estoque crítico */}
         <Card className="shadow-card">
