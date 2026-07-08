@@ -258,9 +258,9 @@ export function AppSidebar() {
         collapsible="icon"
         className={cn(
           "transition-[width] duration-300 ease-in-out",
-          "[&_[data-sidebar=sidebar]]:bg-gradient-to-b",
-          "[&_[data-sidebar=sidebar]]:from-sidebar",
-          "[&_[data-sidebar=sidebar]]:to-[color-mix(in_oklab,var(--color-sidebar)_88%,black)]",
+          "[&_[data-sidebar=sidebar]]:bg-gradient-sidebar",
+          "[&_[data-sidebar=sidebar]]:border-r",
+          "[&_[data-sidebar=sidebar]]:border-sidebar-border/40",
         )}
       >
         {/* Decorative glow */}
