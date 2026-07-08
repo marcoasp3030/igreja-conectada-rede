@@ -1526,6 +1526,91 @@ export type Database = {
         }
         Relationships: []
       }
+      prayer_intercessions: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_intercessions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prayer_posts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          congregation_id: string
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          is_urgent: boolean
+          mensagem: string
+          rejection_reason: string | null
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          congregation_id: string
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_urgent?: boolean
+          mensagem: string
+          rejection_reason?: string | null
+          status?: string
+          tipo: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          congregation_id?: string
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_urgent?: boolean
+          mensagem?: string
+          rejection_reason?: string | null
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_posts_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
