@@ -420,8 +420,8 @@ function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis type="number" fontSize={10} />
                   <YAxis dataKey="name" type="category" fontSize={11} width={90} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
-                  <Bar dataKey="membros" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", fontSize: 12 }} />
+                  <Bar dataKey="membros" fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -441,8 +441,8 @@ function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="month" fontSize={11} />
                 <YAxis fontSize={11} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
-                <Line type="monotone" dataKey="membros" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", fontSize: 12 }} />
+                <Line type="monotone" dataKey="membros" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -461,8 +461,8 @@ function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="month" fontSize={11} />
                 <YAxis fontSize={11} domain={[0, 100]} unit="%" />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
-                <Line type="monotone" dataKey="frequencia" stroke="hsl(var(--gold, var(--primary)))" strokeWidth={2} dot={{ r: 3 }} />
+                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", fontSize: 12 }} />
+                <Line type="monotone" dataKey="frequencia" stroke="var(--color-gold)" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -482,9 +482,9 @@ function Dashboard() {
                 <XAxis dataKey="month" fontSize={11} />
                 <YAxis yAxisId="l" fontSize={11} />
                 <YAxis yAxisId="r" orientation="right" fontSize={11} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line yAxisId="l" type="monotone" dataKey="entregas" name="Entregas" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                <Line yAxisId="l" type="monotone" dataKey="entregas" name="Entregas" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 3 }} />
                 <Line yAxisId="r" type="monotone" dataKey="valor" name="R$ arrecadado" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
