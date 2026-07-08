@@ -58,6 +58,7 @@ const groups: MenuGroup[] = [
     label: "Comunicação",
     items: [
       { title: "Avisos", url: "/app/avisos", icon: Megaphone },
+      { title: "Mural de Oração", url: "/app/mural-oracao", icon: HandHeart },
       { title: "Mão Amiga", url: "/app/mao-amiga", icon: HeartHandshake },
       { title: "Empresarial", url: "/app/empresarial", icon: Briefcase },
     ],
