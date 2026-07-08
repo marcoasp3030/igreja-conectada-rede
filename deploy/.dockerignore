@@ -1,0 +1,14 @@
+**/node_modules
+**/.git
+**/.output
+**/.vinxi
+**/.turbo
+**/dist
+**/.env
+**/.env.*
+!.env.example
+**/*.log
+deploy/backups
+deploy/dumps
+deploy/certbot/conf
+deploy/certbot/www
