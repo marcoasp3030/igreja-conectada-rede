@@ -85,7 +85,7 @@ function MuralOracaoPage() {
     setLoading(true);
     const { data: postsData, error } = await supabase
       .from("prayer_posts")
-      .select("*, profiles:user_id(full_name), congregations(name)")
+      .select("*")
       .order("is_urgent", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -96,13 +96,30 @@ function MuralOracaoPage() {
     }
 
     const postIds = (postsData ?? []).map((p: any) => p.id);
-    const { data: intercessions } = postIds.length
-      ? await supabase.from("prayer_intercessions").select("post_id, user_id").in("post_id", postIds)
-      : { data: [] as any[] };
+    const authorIds = Array.from(new Set((postsData ?? []).map((p: any) => p.user_id).filter(Boolean)));
+    const congregationIds = Array.from(new Set((postsData ?? []).map((p: any) => p.congregation_id).filter(Boolean)));
+
+    const [intercessionsResult, profilesResult, congregationsResult] = await Promise.all([
+      postIds.length
+        ? supabase.from("prayer_intercessions").select("post_id, user_id").in("post_id", postIds)
+        : Promise.resolve({ data: [] as any[] }),
+      authorIds.length
+        ? supabase.from("profiles").select("id, full_name").in("id", authorIds)
+        : Promise.resolve({ data: [] as any[] }),
+      congregationIds.length
+        ? supabase.from("congregations").select("id, name").in("id", congregationIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const intercessions = intercessionsResult.data ?? [];
+    const profilesById = new Map((profilesResult.data ?? []).map((profile: any) => [profile.id, profile.full_name]));
+    const congregationsById = new Map(
+      (congregationsResult.data ?? []).map((congregation: any) => [congregation.id, congregation.name]),
+    );
 
     const counts = new Map<string, number>();
     const userSet = new Set<string>();
-    for (const i of intercessions ?? []) {
+    for (const i of intercessions) {
       counts.set(i.post_id, (counts.get(i.post_id) ?? 0) + 1);
       if (i.user_id === user?.id) userSet.add(i.post_id);
     }
@@ -110,8 +127,8 @@ function MuralOracaoPage() {
     setPosts(
       (postsData ?? []).map((p: any) => ({
         ...p,
-        author_name: p.profiles?.full_name ?? null,
-        congregation_name: p.congregations?.name ?? null,
+        author_name: profilesById.get(p.user_id) ?? null,
+        congregation_name: congregationsById.get(p.congregation_id) ?? null,
         intercessions_count: counts.get(p.id) ?? 0,
         user_has_prayed: userSet.has(p.id),
       })),
