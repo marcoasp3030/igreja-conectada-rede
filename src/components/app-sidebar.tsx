@@ -3,7 +3,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Church, Calendar, CalendarDays, Megaphone, BookOpen,
   MapPin, Building2, Settings, LogOut, Users2, UserCog, ScrollText, HeartHandshake, Wallet,
-  Sparkles, Search, X, Briefcase,
+  Sparkles, Search, X, Briefcase, HandHeart,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
