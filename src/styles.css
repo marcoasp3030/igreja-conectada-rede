@@ -149,25 +149,45 @@
 
 @layer base {
   * { border-color: var(--color-border); }
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-feature-settings: "cv11", "ss01";
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
   }
-  h1, h2, h3, h4 { letter-spacing: -0.01em; }
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
 }
 
+@utility font-display {
+  font-family: var(--font-display);
+}
 @utility bg-gradient-hero {
   background-image: var(--gradient-hero);
 }
 @utility bg-gradient-gold {
   background-image: var(--gradient-gold);
 }
+@utility bg-gradient-sidebar {
+  background-image: var(--gradient-sidebar);
+}
 @utility shadow-soft {
   box-shadow: var(--shadow-soft);
 }
 @utility shadow-card {
   box-shadow: var(--shadow-card);
+}
+@utility ring-gold {
+  box-shadow: var(--shadow-ring-gold);
 }
 @utility text-gold {
   color: var(--color-gold);
