@@ -220,7 +220,6 @@ function MuralOracaoPage() {
       <PageHeader
         title="Mural de Oração"
         description="Pedidos, testemunhos e intercessão em comunhão."
-        icon={HandHeart}
         actions={
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
