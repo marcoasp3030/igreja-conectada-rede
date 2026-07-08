@@ -417,10 +417,10 @@ function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 12 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis type="number" fontSize={10} />
-                  <YAxis dataKey="name" type="category" fontSize={11} width={90} />
-                  <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", fontSize: 12 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.6} />
+                  <XAxis type="number" fontSize={10}  stroke="var(--color-muted-foreground)" tick={{ fill: "var(--color-muted-foreground)" }} />
+                  <YAxis dataKey="name" type="category" fontSize={11} width={90}  stroke="var(--color-muted-foreground)" tick={{ fill: "var(--color-muted-foreground)" }} />
+                  <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12, color: "var(--color-foreground)" }} labelStyle={{ color: "var(--color-foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--color-foreground)" }} />
                   <Bar dataKey="membros" fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -438,10 +438,10 @@ function Dashboard() {
           <CardContent>
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={growthSeries} margin={{ left: 0, right: 12, top: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="month" fontSize={11} />
-                <YAxis fontSize={11} />
-                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.6} />
+                <XAxis dataKey="month" fontSize={11}  stroke="var(--color-muted-foreground)" tick={{ fill: "var(--color-muted-foreground)" }} />
+                <YAxis fontSize={11}  stroke="var(--color-muted-foreground)" tick={{ fill: "var(--color-muted-foreground)" }} />
+                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12, color: "var(--color-foreground)" }} labelStyle={{ color: "var(--color-foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--color-foreground)" }} />
                 <Line type="monotone" dataKey="membros" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -458,10 +458,10 @@ function Dashboard() {
           <CardContent>
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={ebdTrend} margin={{ left: 0, right: 12, top: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="month" fontSize={11} />
-                <YAxis fontSize={11} domain={[0, 100]} unit="%" />
-                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.6} />
+                <XAxis dataKey="month" fontSize={11}  stroke="var(--color-muted-foreground)" tick={{ fill: "var(--color-muted-foreground)" }} />
+                <YAxis fontSize={11} domain={[0, 100]} unit="%"  stroke="var(--color-muted-foreground)" tick={{ fill: "var(--color-muted-foreground)" }} />
+                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12, color: "var(--color-foreground)" }} labelStyle={{ color: "var(--color-foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--color-foreground)" }} />
                 <Line type="monotone" dataKey="frequencia" stroke="var(--color-gold)" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -478,11 +478,11 @@ function Dashboard() {
           <CardContent>
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={maTrend} margin={{ left: 0, right: 12, top: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="month" fontSize={11} />
-                <YAxis yAxisId="l" fontSize={11} />
-                <YAxis yAxisId="r" orientation="right" fontSize={11} />
-                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.6} />
+                <XAxis dataKey="month" fontSize={11}  stroke="var(--color-muted-foreground)" tick={{ fill: "var(--color-muted-foreground)" }} />
+                <YAxis yAxisId="l" fontSize={11}  stroke="var(--color-muted-foreground)" tick={{ fill: "var(--color-muted-foreground)" }} />
+                <YAxis yAxisId="r" orientation="right" fontSize={11}  stroke="var(--color-muted-foreground)" tick={{ fill: "var(--color-muted-foreground)" }} />
+                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12, color: "var(--color-foreground)" }} labelStyle={{ color: "var(--color-foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--color-foreground)" }} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Line yAxisId="l" type="monotone" dataKey="entregas" name="Entregas" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 3 }} />
                 <Line yAxisId="r" type="monotone" dataKey="valor" name="R$ arrecadado" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
