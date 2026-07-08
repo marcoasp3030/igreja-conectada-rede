@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAppUsuariosRouteImport } from './routes/_authenticated/app/usuarios'
+import { Route as AuthenticatedAppMuralOracaoRouteImport } from './routes/_authenticated/app/mural-oracao'
 import { Route as AuthenticatedAppMembrosRouteImport } from './routes/_authenticated/app/membros'
 import { Route as AuthenticatedAppMapaRouteImport } from './routes/_authenticated/app/mapa'
 import { Route as AuthenticatedAppMaoAmigaRouteImport } from './routes/_authenticated/app/mao-amiga'
@@ -57,6 +58,12 @@ const AuthenticatedAppUsuariosRoute =
   AuthenticatedAppUsuariosRouteImport.update({
     id: '/app/usuarios',
     path: '/app/usuarios',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppMuralOracaoRoute =
+  AuthenticatedAppMuralOracaoRouteImport.update({
+    id: '/app/mural-oracao',
+    path: '/app/mural-oracao',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAppMembrosRoute = AuthenticatedAppMembrosRouteImport.update({
@@ -185,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
   '/app/membros': typeof AuthenticatedAppMembrosRoute
+  '/app/mural-oracao': typeof AuthenticatedAppMuralOracaoRoute
   '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/financeiro/despesas': typeof AuthenticatedAppFinanceiroDespesasRoute
@@ -209,6 +217,7 @@ export interface FileRoutesByTo {
   '/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
   '/app/mapa': typeof AuthenticatedAppMapaRoute
   '/app/membros': typeof AuthenticatedAppMembrosRoute
+  '/app/mural-oracao': typeof AuthenticatedAppMuralOracaoRoute
   '/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/financeiro/despesas': typeof AuthenticatedAppFinanceiroDespesasRoute
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/app/mao-amiga': typeof AuthenticatedAppMaoAmigaRoute
   '/_authenticated/app/mapa': typeof AuthenticatedAppMapaRoute
   '/_authenticated/app/membros': typeof AuthenticatedAppMembrosRoute
+  '/_authenticated/app/mural-oracao': typeof AuthenticatedAppMuralOracaoRoute
   '/_authenticated/app/usuarios': typeof AuthenticatedAppUsuariosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/financeiro/despesas': typeof AuthenticatedAppFinanceiroDespesasRoute
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/app/mao-amiga'
     | '/app/mapa'
     | '/app/membros'
+    | '/app/mural-oracao'
     | '/app/usuarios'
     | '/app/'
     | '/app/financeiro/despesas'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/app/mao-amiga'
     | '/app/mapa'
     | '/app/membros'
+    | '/app/mural-oracao'
     | '/app/usuarios'
     | '/app'
     | '/app/financeiro/despesas'
@@ -313,6 +325,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/mao-amiga'
     | '/_authenticated/app/mapa'
     | '/_authenticated/app/membros'
+    | '/_authenticated/app/mural-oracao'
     | '/_authenticated/app/usuarios'
     | '/_authenticated/app/'
     | '/_authenticated/app/financeiro/despesas'
@@ -363,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/app/usuarios'
       fullPath: '/app/usuarios'
       preLoaderRoute: typeof AuthenticatedAppUsuariosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/mural-oracao': {
+      id: '/_authenticated/app/mural-oracao'
+      path: '/app/mural-oracao'
+      fullPath: '/app/mural-oracao'
+      preLoaderRoute: typeof AuthenticatedAppMuralOracaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app/membros': {
@@ -542,6 +562,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppMaoAmigaRoute: typeof AuthenticatedAppMaoAmigaRoute
   AuthenticatedAppMapaRoute: typeof AuthenticatedAppMapaRoute
   AuthenticatedAppMembrosRoute: typeof AuthenticatedAppMembrosRoute
+  AuthenticatedAppMuralOracaoRoute: typeof AuthenticatedAppMuralOracaoRoute
   AuthenticatedAppUsuariosRoute: typeof AuthenticatedAppUsuariosRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
@@ -561,6 +582,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppMaoAmigaRoute: AuthenticatedAppMaoAmigaRoute,
   AuthenticatedAppMapaRoute: AuthenticatedAppMapaRoute,
   AuthenticatedAppMembrosRoute: AuthenticatedAppMembrosRoute,
+  AuthenticatedAppMuralOracaoRoute: AuthenticatedAppMuralOracaoRoute,
   AuthenticatedAppUsuariosRoute: AuthenticatedAppUsuariosRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
